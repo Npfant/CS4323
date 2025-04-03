@@ -31,6 +31,7 @@ int main() {
       perror("msgsnd");
       exit(1);
     }
+    printf("message send | child process");
   }
   if(pid != 0){
     wait(1);
@@ -38,6 +39,7 @@ int main() {
       perror("msgrcv");
       exit(1);
     }
+    printf("message received | parent process");
     printf(mtext);
   }
 }
