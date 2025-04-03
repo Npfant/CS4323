@@ -7,10 +7,6 @@
 #include <errno.h>
 
 #define MSG_SIZE 16
-struct message {
-  long mtype;
-  char mtext[MSG_SIZE];
-};
 
 int main() {
   int msqid;
@@ -27,15 +23,26 @@ int main() {
     exit(1);
   }
 
-  msg.mtype = 1;
-  strcpt(msg.mtext, "take1");
-  if(msgsnd(msqid, &msg, strlen(msg.mtext)+1, 0) == -1) {
-    perror("msgsnd");
-    exit(1);
+  int pid = fork();
+  if(pid == 0){
+    msg.mtype = 1;
+    strcpt(msg.mtext, "take1");
+    if(msgsnd(msqid, &msg, strlen(msg.mtext)+1, 0) == -1) {
+      perror("msgsnd");
+      exit(1);
+    }
   }
-
-  if(msgrcv(msqid, &msg, MSG_SIZE, 1, 0) == -1) {
-    perror("msgrcv");
-    exit(1);
+  if(pid != 0){
+    wait(1);
+    if(msgrcv(msqid, &msg, MSG_SIZE, 1, 0) == -1) {
+      perror("msgrcv");
+      exit(1);
+    }
+    printf(mtext);
   }
 }
+
+struct message {
+  long mtype;
+  char mtext[MSG_SIZE];
+};
