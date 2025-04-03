@@ -48,6 +48,8 @@ int main() {
         //printf("Parent: %d PID = %d PPID = %d\n", trainPID, getpid(), getppid());
     }
   }
+  
+  printf("totalProcesses: %d", totalProcesses);
 
   return 0;
 }
