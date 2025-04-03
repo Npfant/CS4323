@@ -54,7 +54,7 @@ void server_process(int msgid) {
         msgsnd(msgid, &msg, sizeof(Message) - sizeof(long), 0);
         printf("Server granted Train %d access to Intersection %d\n", msg.train_id, msg.intersection_id);
 
-        // Receive RELEASE message
+        // Receive RELEASE message // Not sure to add Semaphores here or during the release process. 
         msgrcv(msgid, &msg, sizeof(Message) - sizeof(long), RELEASE, 0);
         printf("Server received RELEASE from Train %d for Intersection %d\n", msg.train_id, msg.intersection_id);
     }
@@ -63,7 +63,7 @@ void server_process(int msgid) {
 int main() {
     // Create a message queue with a unique key
     key_t key = ftok("train_sim", 69);
-    int msgid = msgget(key, 0777 | IPC_CREAT); // Create the message queue
+    int msgid = msgget(key, 0777 | IPC_CREAT); // Create the message Q
 
     if (fork() == 0) { // Child process to run the server
         server_process(msgid);
@@ -82,6 +82,6 @@ int main() {
 
     sleep(10); // Allow time for trains to finish
 
-    msgctl(msgid, IPC_RMID, NULL); // Cleanup the message queue
+    msgctl(msgid, IPC_RMID, NULL); // Cleanup the message Q
     return 0;
 }
