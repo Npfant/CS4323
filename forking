@@ -33,8 +33,9 @@ int main() {
   
   const char* childNames[CHILDCOUNT] = {"Train1", "Train2", "Train3", "Train4", "Train5"};
   
+  int trainPID = fork(); 
+  
   for (int i = 0; i < CHILDCOUNT; i++){
-    int trainPID = fork(); 
     totalProcesses ++;
     
     if (trainPID < 0) { // fork failed; exit
@@ -45,7 +46,8 @@ int main() {
       printf("TrainName: %s\n", train_name);
 
     } else { //parent goes down this path (main)
-        //printf("Parent: %d PID = %d PPID = %d\n", trainPID, getpid(), getppid());
+      int trainPID = fork(); 
+      //printf("Parent: %d PID = %d PPID = %d\n", trainPID, getpid(), getppid());
     }
   }
   
