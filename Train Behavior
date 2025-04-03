@@ -79,7 +79,7 @@ int main(){
     //We need semaphores
 
     //We need forks
-
+    
     
 
 
