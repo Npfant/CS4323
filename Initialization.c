@@ -25,5 +25,31 @@ int main()
   sem_t isD[2];         //Intersection D: can hold 2 trains
   pthread_mutex_t isE;  //Intersection E: can hold 1 train
 
-    //
+  //Code to lock and unlock each intersection - to be used on server side later
+  
+  //To lock all:
+  /*
+  pthread_mutex_lock(&isA);
+  for(int i = 0; i < 3; i++){
+    sem_wait(&isB[i]);
+  }
+  pthread_mutex_lock(&isC);
+  for(int i = 0; i < 2; i++){
+    sem_wait(&isD[i]);
+  }
+  pthread_mutex_lock(&isE);
+  */
+
+  //To unlock all:
+  /*
+  pthread_mutex_unlock(&isA);
+  for(int i = 0; i < 3; i++){
+    sem_post(&isB[i]);
+  }
+  pthread_mutex_unlock(&isC);
+  for(int i = 0; i < 2; i++){
+    sem_post(&isD[i]);
+  }
+  pthread_mutex_unlock(&isE);
+  */
 }
