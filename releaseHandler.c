@@ -1,67 +1,61 @@
-/*
- * Group Project - CS 4323 Operating Systems
- 
-    
-
- * Description:
- * This module handles how trains (child processes) release intersections.
- * It is triggered when the server receives a RELEASE message from a train.
- * Based on the intersection type (mutex or semaphore), it unlocks the resource
- * and updates the resource allocation table stored in shared memory.
- */
+// Group Project CS 4323 - Ashton and Luis (Phase 1 [work in progress])
+// Description: Simulates train movement with semaphores/mutexes, forks child processes
+// We are not fully done yet, but we have made great progress, and we will work later down the road to merge this code with the rest of the groups
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include <semaphore.h>
-#include <pthread.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
-#include <sys/shm.h>
+#include <string.h>
 #include <unistd.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
-#define MAX_TRAINS 10
+#define NUM_TRAINS 4
 #define MAX_NAME_LEN 32
+#define MAX_HOLDING 10
 
-// Define the intersection type: either a mutex (1 train) or semaphore (>1 trains)
-typedef enum {
-    MUTEX,
-    SEMAPHORE
-} LockType;
+typedef enum { MUTEX, SEMAPHORE } LockType;
 
-// Define the message format for communication
-struct message {
-    long msg_type;  // Must be long for System V message queues
-    char train_name[MAX_NAME_LEN];
-    char intersection_name[MAX_NAME_LEN];
-};
-
-// Structure representing an intersection in shared memory
 typedef struct {
-    char name[MAX_NAME_LEN];               // Intersection name
-    LockType type;                         // MUTEX or SEMAPHORE
-    int capacity;                          // Capacity of the intersection
-    pthread_mutex_t mutex;                 // Mutex (used if capacity == 1)
-    sem_t semaphore;                       // Semaphore (used if capacity > 1)
-    char holding_trains[MAX_TRAINS][MAX_NAME_LEN];  // List of trains holding this intersection
-    int num_holding;                       // Number of trains currently holding
+    char name[MAX_NAME_LEN];
+    LockType type;
+    int capacity;
+
+    pthread_mutex_t mutex;
+    sem_t semaphore;
+
+    char holding_trains[MAX_HOLDING][MAX_NAME_LEN];
+    int num_holding;
 } Intersection;
 
-// Helper: Find intersection by name
-int find_intersection_index(const char* name, Intersection intersections[], int total) {
-    for (int i = 0; i < total; i++) {
+Intersection intersections[] = {
+    {"Intersection A", MUTEX, 1},
+    {"Intersection B", SEMAPHORE, 2},
+    {"Intersection C", MUTEX, 1},
+    {"Intersection D", SEMAPHORE, 3},
+    {"Intersection E", MUTEX, 1}
+};
+
+int num_intersections = sizeof(intersections) / sizeof(Intersection);
+
+// -------------------- HELPER FUNCTIONS --------------------
+int find_intersection_index(const char* name) {
+    for (int i = 0; i < num_intersections; i++) {
         if (strcmp(intersections[i].name, name) == 0) {
             return i;
         }
     }
-    return -1;  // Not found
+    return -1;
 }
 
-// Helper: Remove train from the holding_trains list
+void add_train_to_holding(Intersection* inter, const char* train_name) {
+    strcpy(inter->holding_trains[inter->num_holding++], train_name);
+}
+
 void remove_train_from_holding(Intersection* inter, const char* train_name) {
     for (int i = 0; i < inter->num_holding; i++) {
         if (strcmp(inter->holding_trains[i], train_name) == 0) {
-            // Shift down remaining trains
             for (int j = i; j < inter->num_holding - 1; j++) {
                 strcpy(inter->holding_trains[j], inter->holding_trains[j + 1]);
             }
@@ -71,42 +65,113 @@ void remove_train_from_holding(Intersection* inter, const char* train_name) {
     }
 }
 
-// Main handler function to process RELEASE message
-void handle_release(struct message msg, Intersection intersections[], int total_intersections) {
-    int idx = find_intersection_index(msg.intersection_name, intersections, total_intersections);
+// This is the core logic (most key part)
+void acquire_intersection(const char* train_name, const char* inter_name) {
+    int idx = find_intersection_index(inter_name);
     if (idx == -1) {
-        printf("SERVER: ERROR - Intersection '%s' not found.\n", msg.intersection_name);
+        printf("ERROR: Unknown intersection %s\n", inter_name);
         return;
     }
 
     Intersection* inter = &intersections[idx];
 
-    // Check if the train actually holds this intersection
-    int holds_it = 0;
-    for (int i = 0; i < inter->num_holding; i++) {
-        if (strcmp(inter->holding_trains[i], msg.train_name) == 0) {
-            holds_it = 1;
-            break;
+    printf("%s is waiting at %s.\n", train_name, inter->name);
+
+    if (inter->type == MUTEX) {
+        pthread_mutex_lock(&inter->mutex);
+    } else {
+        sem_wait(&inter->semaphore);
+    }
+
+    add_train_to_holding(inter, train_name);
+    printf("%s is passing through %s.\n", train_name, inter->name);
+    sleep(2); // Simulates traversal time
+}
+
+void release_intersection(const char* train_name, const char* inter_name) {
+    int idx = find_intersection_index(inter_name);
+    if (idx == -1) return;
+
+    Intersection* inter = &intersections[idx];
+
+    if (inter->type == MUTEX) {
+        pthread_mutex_unlock(&inter->mutex);
+    } else {
+        sem_post(&inter->semaphore);
+    }
+
+    remove_train_from_holding(inter, train_name);
+    printf("%s has left %s.\n", train_name, inter->name);
+}
+
+// Train behavior
+void train_behavior(const char* train_name) {
+    if (strcmp(train_name, "Train1") == 0) {
+        acquire_intersection(train_name, "Intersection A");
+        release_intersection(train_name, "Intersection A");
+
+        acquire_intersection(train_name, "Intersection B");
+        release_intersection(train_name, "Intersection B");
+
+        acquire_intersection(train_name, "Intersection C");
+        release_intersection(train_name, "Intersection C");
+    } else if (strcmp(train_name, "Train2") == 0) {
+        acquire_intersection(train_name, "Intersection B");
+        release_intersection(train_name, "Intersection B");
+
+        acquire_intersection(train_name, "Intersection D");
+        release_intersection(train_name, "Intersection D");
+
+        acquire_intersection(train_name, "Intersection E");
+        release_intersection(train_name, "Intersection E");
+    } else if (strcmp(train_name, "Train3") == 0) {
+        acquire_intersection(train_name, "Intersection C");
+        release_intersection(train_name, "Intersection C");
+
+        acquire_intersection(train_name, "Intersection D");
+        release_intersection(train_name, "Intersection D");
+
+        acquire_intersection(train_name, "Intersection A");
+        release_intersection(train_name, "Intersection A");
+    } else if (strcmp(train_name, "Train4") == 0) {
+        acquire_intersection(train_name, "Intersection E");
+        release_intersection(train_name, "Intersection E");
+
+        acquire_intersection(train_name, "Intersection B");
+        release_intersection(train_name, "Intersection B");
+
+        acquire_intersection(train_name, "Intersection D");
+        release_intersection(train_name, "Intersection D");
+    }
+
+    exit(0);
+}
+
+
+int main() {
+    for (int i = 0; i < num_intersections; i++) {
+        if (intersections[i].type == MUTEX) {
+            pthread_mutex_init(&intersections[i].mutex, NULL);
+        } else {
+            sem_init(&intersections[i].semaphore, 1, intersections[i].capacity);
         }
     }
 
-    if (!holds_it) {
-        printf("SERVER: WARNING - Train '%s' tried to release intersection '%s' it does not hold.\n",
-               msg.train_name, msg.intersection_name);
-        return;
+    const char* trains[NUM_TRAINS] = {"Train1", "Train2", "Train3", "Train4"};
+    for (int i = 0; i < NUM_TRAINS; i++) {
+        pid_t pid = fork();
+        if (pid == 0) {
+            train_behavior(trains[i]);
+        }
     }
 
-    // Release the lock
-    if (inter->type == MUTEX) {
-        pthread_mutex_unlock(&inter->mutex);
-        printf("SERVER: Mutex released on %s by %s\n", inter->name, msg.train_name);
-    } else if (inter->type == SEMAPHORE) {
-        sem_post(&inter->semaphore);
-        printf("SERVER: Semaphore released on %s by %s\n", inter->name, msg.train_name);
+    // wait for all trains to finish
+    for (int i = 0; i < NUM_TRAINS; i++) {
+        wait(NULL);
     }
 
-    // Update holding list
-    remove_train_from_holding(inter, msg.train_name);
-    printf("SERVER: Updated resource table. '%s' no longer holds '%s'.\n",
-           msg.train_name, msg.intersection_name);
+    printf("Simulation complete. All trains finished.\n");
+
+    return 0;
 }
+
