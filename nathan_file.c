@@ -73,11 +73,6 @@ void time(event){
 
 int main() {
     pthread_t threads[];
-    // Get student ID and name from user
-    printf("Enter student ID: ");
-    fgets(student.ID, sizeof(student.ID), stdin);
-    printf("Enter student name: ");
-    fgets(student.name, sizeof(student.name), stdin);
     // Remainder of the code..
     pthread_create(&threads[i], NULL, threadGen, NULL);            
     pthread_join(threads[i], NULL);
