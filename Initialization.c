@@ -20,9 +20,9 @@ int main()
   }
   //Create locks
   pthread_mutex_t isA;  //Intersection A: can hold 1 train
-  sem_t isB[3];         //Intersection B: can hold 3 trains
+  sem_t isB;         //Intersection B: can hold 3 trains
   pthread_mutex_t isC;  //Intersection C: can hold 1 train
-  sem_t isD[2];         //Intersection D: can hold 2 trains
+  sem_t isD;         //Intersection D: can hold 2 trains
   pthread_mutex_t isE;  //Intersection E: can hold 1 train
 
   //Code to lock and unlock each intersection - to be used on server side later
