@@ -6,24 +6,48 @@
 #include <stdio.h>  // for printf
 #include <stdlib.h> // for exit(1)
 #include <unistd.h> // for fork
-#include <pthread.h> // for mutex
+#include <string.h> //for string
 
 int main() {
   //Total number of trains
-  #define CHILDCOUNT 5
+  #define TRAINCOUNT 5
+  //Max line length to check lines in train.txt
+  #define MAXLINELEN 100
 
   char* train_name = "";
+  
+  char childNames[TRAINCOUNT][50];
 
   //Test variable
   //int totalProcesses = 0;
   
-  const char* childNames[CHILDCOUNT] = {"Train1", "Train2", "Train3", "Train4", "Train5"};
+  FILE *file = fopen("train.txt", "r");
+  
+  //reads train.txt for the name of the trains
+  for (int i = 0; i < TRAINCOUNT; i++){
+    char line[MAXLINELEN];
+    
+    if (fgets(line, sizeof(line), file) != NULL){
+      char *colon = strchr(line, ':'); //reads for first colon, separating the train name and its instructions
+      
+      if (colon != NULL) {
+        size_t nameLen = colon - line;
+        strncpy(childNames[i], line, nameLen);
+        childNames[i][nameLen] = '\0'; //adding null terminator
+      }
+    } else {
+        fprintf(stderr, "Not enough lines in trains.txt\n"); //Error in case we change train.txt to add more trains than TRAINCOUNT
+        exit(1);
+    }
+  }
+  
+  fclose(file);
   
   int trainPID = fork(); 
 
   //Creates the forking process for the amount of trains planned
-  for (int i = 0; i < CHILDCOUNT; i++){
-    totalProcesses ++;
+  for (int i = 0; i < TRAINCOUNT; i++){
+    //totalProcesses ++;
 
     if (trainPID < 0) { // fork failed; exit
       fprintf(stderr, "fork failed\n");
