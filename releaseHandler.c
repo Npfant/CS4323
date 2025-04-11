@@ -150,7 +150,7 @@ void train_behavior(const char* train_name) {
     exit(0);
 }
 
-
+//from here we will include Nolan's code where the forking process will be implemented
 int main() {
     for (int i = 0; i < num_intersections; i++) {
         if (intersections[i].type == MUTEX) {
