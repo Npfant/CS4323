@@ -1,7 +1,7 @@
 //Author Name: Nolan Voss
 //Email: nolan.voss@okstate.edu
 //Date: 04/10/2025
-//Program Description: Forking for the trains
+//Program Description: Forking for the trains. The trains will read from trains.txt for their names, and fork in the parent process to create however many we need. 
 
 #include <stdio.h>  // for printf
 #include <stdlib.h> // for exit(1)
