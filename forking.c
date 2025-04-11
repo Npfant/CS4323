@@ -31,6 +31,7 @@ int main() {
     } else if (trainPID == 0) { //child (new process)
       train_name = childNames[i];
       printf("TrainName: %s\n", train_name);
+      //Once we merge this with the main code, this will run train_behavior function.
 
     } else { //parent goes down this path (main)
       int trainPID = fork(); 
