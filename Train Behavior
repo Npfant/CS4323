@@ -1,3 +1,7 @@
+//Author Name: Luis Guzman
+//Program Description: Figure out train behavior for trains.
+//Pretty much I've set up a code for the train behavior so Nolan and Ashton can merge their code with mine for it to work.
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
