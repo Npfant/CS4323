@@ -65,7 +65,7 @@ void remove_train_from_holding(Intersection* inter, const char* train_name) {
     }
 }
 
-// This is the core logic (most key part)
+// This is the core logic (most key part) Ashton figured this out
 void acquire_intersection(const char* train_name, const char* inter_name) {
     int idx = find_intersection_index(inter_name);
     if (idx == -1) {
