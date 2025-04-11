@@ -9,9 +9,11 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 
-#define NUM_TRAINS 4
+#define NUM_TRAINS 5
 #define MAX_NAME_LEN 32
 #define MAX_HOLDING 10
+
+char trains[5][100];         //Store train data in array of 5 lines
 
 // Message structure for request queue (train to server)
 struct request_msg {
@@ -41,13 +43,7 @@ typedef struct {
     int num_holding;
 } Intersection;
 
-Intersection intersections[] = {
-    {"Intersection A", MUTEX, 1},
-    {"Intersection B", SEMAPHORE, 2},
-    {"Intersection C", MUTEX, 1},
-    {"Intersection D", SEMAPHORE, 3},
-    {"Intersection E", MUTEX, 1}
-};
+Intersection intersections[5];
 
 int num_intersections = sizeof(intersections) / sizeof(Intersection);
 
@@ -246,6 +242,29 @@ int main() {
     // Create two message queues: one for requests, one for responses
     int req_id = msgget(IPC_PRIVATE, 0666 | IPC_CREAT);
     int res_id = msgget(IPC_PRIVATE, 0666 | IPC_CREAT);
+    
+    FILE *intersections_init = fopen("intersections.txt","r"); //Read intersections file
+    FILE *trains_init = fopen("trains.txt","r");               //Read trains file
+  
+    for(int i = 0; i < 5; i++){ //Loop to read lines into arrays
+      char temp[100];
+      fgets(temp,100,intersections_init);     //read line from intersections file into temp
+      fgets(trains[i],100,trains_init);       //read line from trains file directly into trains array
+        
+      char* interName = strtok(temp, ":");    //copy name of intersection into interName
+      char* capacity = strtok(NULL, ":");     //copy intersection capacity into capacity
+        
+      if(capacity - '0' > 1){                        //if capacity > 1: make locktype semaphore
+        strcpy(intersections[i].name, interName);        //name
+        intersections[i].type = SEMAPHORE;               //locktype
+        strcpy(intersections[i].capacity, capacity);     //capacity
+      }else{                                         //else make locktype mutex
+        strcpy(intersections[i].name, interName);        //name
+        intersections[i].type = MUTEX;                   //locktype
+        strcpy(intersections[i].capacity, capacity);     //capacity
+      }
+    }
+    
 
     if (req_id == -1 || res_id == -1) {
         perror("msgget failed");
