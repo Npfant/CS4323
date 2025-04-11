@@ -105,6 +105,9 @@ void release_intersection(const char* train_name, const char* inter_name) {
 }
 
 // Train behavior
+/*Luis figured out the path on where the trains need to go which he got from the Group Document.
+    Ashton figured out the acquire and release for the intersections so it can run smoothly
+*/
 void train_behavior(const char* train_name) {
     if (strcmp(train_name, "Train1") == 0) {
         acquire_intersection(train_name, "Intersection A");
