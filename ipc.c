@@ -198,41 +198,41 @@ void handle_request(int req_id, int res_id) {
 // Train behavior
 void train_behavior(const char* train_name, int req_id, int res_id) {
     if (strcmp(train_name, "Train1") == 0) {
-        acquire_intersection(train_name, "Intersection A", req_id, res_id);
-        release_intersection(train_name, "Intersection A", req_id, res_id);
+        acquire_intersection(train_name, "IntersectionA", req_id, res_id);
+        release_intersection(train_name, "IntersectionA", req_id, res_id);
 
-        acquire_intersection(train_name, "Intersection B", req_id, res_id);
-        release_intersection(train_name, "Intersection B", req_id, res_id);
+        acquire_intersection(train_name, "IntersectionB", req_id, res_id);
+        release_intersection(train_name, "IntersectionB", req_id, res_id);
 
-        acquire_intersection(train_name, "Intersection C", req_id, res_id);
-        release_intersection(train_name, "Intersection C", req_id, res_id);
+        acquire_intersection(train_name, "IntersectionC", req_id, res_id);
+        release_intersection(train_name, "IntersectionC", req_id, res_id);
     } else if (strcmp(train_name, "Train2") == 0) {
-        acquire_intersection(train_name, "Intersection B", req_id, res_id);
-        release_intersection(train_name, "Intersection B", req_id, res_id);
+        acquire_intersection(train_name, "IntersectionB", req_id, res_id);
+        release_intersection(train_name, "IntersectionB", req_id, res_id);
 
-        acquire_intersection(train_name, "Intersection D", req_id, res_id);
-        release_intersection(train_name, "Intersection D", req_id, res_id);
+        acquire_intersection(train_name, "IntersectionD", req_id, res_id);
+        release_intersection(train_name, "IntersectionD", req_id, res_id);
 
-        acquire_intersection(train_name, "Intersection E", req_id, res_id);
-        release_intersection(train_name, "Intersection E", req_id, res_id);
+        acquire_intersection(train_name, "IntersectionE", req_id, res_id);
+        release_intersection(train_name, "IntersectionE", req_id, res_id);
     } else if (strcmp(train_name, "Train3") == 0) {
-        acquire_intersection(train_name, "Intersection C", req_id, res_id);
-        release_intersection(train_name, "Intersection C", req_id, res_id);
+        acquire_intersection(train_name, "IntersectionC", req_id, res_id);
+        release_intersection(train_name, "IntersectionC", req_id, res_id);
 
-        acquire_intersection(train_name, "Intersection D", req_id, res_id);
-        release_intersection(train_name, "Intersection D", req_id, res_id);
+        acquire_intersection(train_name, "IntersectionD", req_id, res_id);
+        release_intersection(train_name, "IntersectionD", req_id, res_id);
 
-        acquire_intersection(train_name, "Intersection A", req_id, res_id);
-        release_intersection(train_name, "Intersection A", req_id, res_id);
+        acquire_intersection(train_name, "IntersectionA", req_id, res_id);
+        release_intersection(train_name, "IntersectionA", req_id, res_id);
     } else if (strcmp(train_name, "Train4") == 0) {
-        acquire_intersection(train_name, "Intersection E", req_id, res_id);
-        release_intersection(train_name, "Intersection E", req_id, res_id);
+        acquire_intersection(train_name, "IntersectionE", req_id, res_id);
+        release_intersection(train_name, "IntersectionE", req_id, res_id);
 
-        acquire_intersection(train_name, "Intersection B", req_id, res_id);
-        release_intersection(train_name, "Intersection B", req_id, res_id);
+        acquire_intersection(train_name, "IntersectionB", req_id, res_id);
+        release_intersection(train_name, "IntersectionB", req_id, res_id);
 
-        acquire_intersection(train_name, "Intersection D", req_id, res_id);
-        release_intersection(train_name, "Intersection D", req_id, res_id);
+        acquire_intersection(train_name, "IntersectionD", req_id, res_id);
+        release_intersection(train_name, "IntersectionD", req_id, res_id);
     }
 
     exit(0);
@@ -252,16 +252,18 @@ int main() {
       fgets(trains[i],100,trains_init);       //read line from trains file directly into trains array
         
       char* interName = strtok(temp, ":");    //copy name of intersection into interName
-      char* capacity = strtok(NULL, ":");     //copy intersection capacity into capacity
+      char* tempCap = strtok(NULL, ":");     //copy intersection capacity into capacity
+      int cap;
+      sscanf(tempCap, "%d", &cap);
         
-      if(capacity - '0' > 1){                        //if capacity > 1: make locktype semaphore
+      if(cap > 1){                        //if capacity > 1: make locktype semaphore
         strcpy(intersections[i].name, interName);        //name
         intersections[i].type = SEMAPHORE;               //locktype
-        strcpy(intersections[i].capacity, capacity);     //capacity
+        intersections[i].capacity = cap;                 //capacity
       }else{                                         //else make locktype mutex
         strcpy(intersections[i].name, interName);        //name
         intersections[i].type = MUTEX;                   //locktype
-        strcpy(intersections[i].capacity, capacity);     //capacity
+        intersections[i].capacity = cap;                 //capacity
       }
     }
     
