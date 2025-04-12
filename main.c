@@ -47,10 +47,22 @@ Intersection intersections[5];
 
 int num_intersections = sizeof(intersections) / sizeof(Intersection);
 
+int alloc[NUM_TRAINS][num_intersections]; //Initialize allocation and resource matricies to number of trains and intersections.
+int req[NUM_TRAINS][num_intersections];
+
 // -------------------- HELPER FUNCTIONS --------------------
 int find_intersection_index(const char* name) {
     for (int i = 0; i < num_intersections; i++) {
         if (strcmp(intersections[i].name, name) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int find_train_index(const char* name) {
+    for (int i = 0; i < NUM_TRAINS; i++) {
+        if (strcmp(trains[i], name) == 0) {
             return i;
         }
     }
@@ -115,13 +127,19 @@ void receive_response(int res_id, struct response_msg* msg) {
 // This is the core logic (most key part)
 void acquire_intersection(const char* train_name, const char* inter_name, int req_id, int res_id) {
     int idx = find_intersection_index(inter_name);
+    int trainx = find_train_index(train_name);
     if (idx == -1) {
         printf("ERROR: Unknown intersection %s\n", inter_name);
         return;
     }
+    if (trainx == -1) {
+        printf("ERROR: Unknown train %s\n", train_name);
+        return;
+    }
 
     Intersection* inter = &intersections[idx];
-
+    req[trainx][idx] += 1; 
+    rat();
     printf("%s is waiting at %s.\n", train_name, inter->name);
     send_request(req_id, train_name, inter_name);
 
@@ -141,7 +159,8 @@ void acquire_intersection(const char* train_name, const char* inter_name, int re
         } else {
             sem_wait(&inter->semaphore);
         }
-
+        req[trainx][idx] -= 1; //Move resource from request matrix to allocation one.
+        alloc[trainx][idx] += 1;
         add_train_to_holding(inter, train_name);
         printf("%s is passing through %s.\n", train_name, inter->name);
         sleep(2); // Simulates traversal time
@@ -152,7 +171,8 @@ void acquire_intersection(const char* train_name, const char* inter_name, int re
 
 void release_intersection(const char* train_name, const char* inter_name, int req_id, int res_id) {
     int idx = find_intersection_index(inter_name);
-    if (idx == -1) return;
+    int trainx = find_train_index(train_name);
+    if (idx == -1 || trainx == -1) return;
 
     Intersection* inter = &intersections[idx];
 
@@ -161,7 +181,7 @@ void release_intersection(const char* train_name, const char* inter_name, int re
     } else {
         sem_post(&inter->semaphore);
     }
-
+    alloc[trainx][idx] -= 1; //Remove resource from allocation matrix.
     remove_train_from_holding(inter, train_name);
     printf("%s has left %s.\n", train_name, inter->name);
     send_response(res_id, "GRANT");
@@ -238,6 +258,38 @@ void train_behavior(const char* train_name, int req_id, int res_id) {
     exit(0);
 }
 
+void rat(){  //Resource allocation table method
+    int avail[num_intersections];
+    for(int i = 0; i < num_intersections; i++){
+        avail[i] = intersections[i].capacity;
+        for(int j = 0; j < NUM_TRAINS; j++){
+            if(alloc[j][i] > 0){
+                avail[i] -= alloc[i][j]; //Decrements available from max to not currently allocated.
+            }
+        }
+        printf("%d ",avail[i]);
+    }
+    printf("\n");
+    bool cycle = 1; //Start with an assumed cycle
+
+    for(int i = 0; i < NUM_TRAINS; i++){
+        for(int j = 0; j < num_intersections; j++){
+            if((avail[j] - req[i][j]) < 0){
+                break; //Stops checking request if it is larger than available.
+            }
+            if(j == (num_intersections - 1)){
+                cycle = 0; //Sets cycle to false if it fully iterates through a line, i.e. there is a request that can be fulfilled.
+            }
+        }
+    }
+    if(cycle == 1){
+        printf("DEADLOCK!\n");
+    }
+    else{
+        printf("NO DEADLOCK\n");
+    }
+}
+
 int main() {
     // Create two message queues: one for requests, one for responses
     int req_id = msgget(IPC_PRIVATE, 0666 | IPC_CREAT);
@@ -265,7 +317,6 @@ int main() {
         strcpy(intersections[i].name, interName);        //name
         intersections[i].type = MUTEX;                   //locktype
         intersections[i].capacity = cap;                 //capacity
-
       }
     }
     
