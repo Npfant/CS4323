@@ -8,6 +8,8 @@
 #include <sys/wait.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
+#include <sys/shm.h>
+#include <stdbool.h>
 
 #define NUM_TRAINS 5
 #define MAX_NAME_LEN 32
@@ -47,10 +49,25 @@ Intersection intersections[5];
 
 int num_intersections = sizeof(intersections) / sizeof(Intersection);
 
+key_t key;
+int shmAlloc;
+int shmReq;
+int (*alloc)[5]; //Initialize allocation and resource matricies to number of trains and intersections.
+int (*req)[5];
+
 // -------------------- HELPER FUNCTIONS --------------------
 int find_intersection_index(const char* name) {
     for (int i = 0; i < num_intersections; i++) {
         if (strcmp(intersections[i].name, name) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int find_train_index(const char* name) {
+    for (int i = 0; i < NUM_TRAINS; i++) {
+        if (strcmp(trains[i], name) == 0) {
             return i;
         }
     }
@@ -112,16 +129,61 @@ void receive_response(int res_id, struct response_msg* msg) {
     }
 }
 
+void rat(){  //Resource allocation table method
+    int avail[num_intersections];
+    printf("Alloc Matrix: ");
+    for(int i = 0; i < num_intersections; i++){
+        avail[i] = intersections[i].capacity;  //Max that can be allocated.
+        for(int j = 0; j < NUM_TRAINS; j++){
+            printf("%d", alloc[i][j]);
+            if(alloc[j][i] > 0){
+                avail[i] -= alloc[j][i]; //Decrements available from max to not currently allocated.
+            }
+        }
+        printf("\n");
+        //printf("%d ",avail[i]);
+    }
+    printf("\n");
+    bool cycle = 1; //Start with an assumed cycle
+    //printf("Req Matrix: ");
+    for(int i = 0; i < NUM_TRAINS; i++){
+        for(int j = 0; j < num_intersections; j++){
+            //printf("%d", req[i][j]);
+            if((avail[j] - req[i][j]) < 0){
+                break; //Stops checking request if it is larger than available.
+            }
+            if(j == (num_intersections - 1)){
+                cycle = 0; //Sets cycle to false if it fully iterates through a line, i.e. there is a request that can be fulfilled.
+            }
+        }
+        //printf("\n");
+    }
+    //printf("\n");
+    if(cycle == 1){
+        printf("DEADLOCK!\n");
+    }
+    else{
+        printf("NO DEADLOCK\n");
+    }
+}
+
 // This is the core logic (most key part)
 void acquire_intersection(const char* train_name, const char* inter_name, int req_id, int res_id) {
     int idx = find_intersection_index(inter_name);
+    int trainx = find_train_index(train_name);
     if (idx == -1) {
-        printf("ERROR: Unknown intersection %s\n", inter_name);
+        printf("ERROR: Unknown intersection %s.\n", inter_name);
+        return;
+    }
+    if (trainx == -1) {
+        printf("ERROR: Unknown train %s.\n", train_name);
         return;
     }
 
     Intersection* inter = &intersections[idx];
-
+    req[trainx][idx] = 1; //Add resource to request matrix.
+    printf("Train ID: %d, Intersection ID: %d, Request: %d  \n", trainx, idx, req[trainx][idx]);
+    rat(); //Call resource allocation table method to check whether or not a deadlock has occurred. 
     printf("%s is waiting at %s.\n", train_name, inter->name);
     send_request(req_id, train_name, inter_name);
 
@@ -141,7 +203,9 @@ void acquire_intersection(const char* train_name, const char* inter_name, int re
         } else {
             sem_wait(&inter->semaphore);
         }
-
+        req[trainx][idx] = 0; //Move resource from request matrix to allocation one.
+        alloc[trainx][idx] = 1;
+        printf("Train ID: %d, Intersection ID: %d, Allocation: %d  \n", trainx, idx, alloc[trainx][idx]);
         add_train_to_holding(inter, train_name);
         printf("%s is passing through %s.\n", train_name, inter->name);
         sleep(2); // Simulates traversal time
@@ -152,7 +216,8 @@ void acquire_intersection(const char* train_name, const char* inter_name, int re
 
 void release_intersection(const char* train_name, const char* inter_name, int req_id, int res_id) {
     int idx = find_intersection_index(inter_name);
-    if (idx == -1) return;
+    int trainx = find_train_index(train_name);
+    if (idx == -1 || trainx == -1) return;
 
     Intersection* inter = &intersections[idx];
 
@@ -161,7 +226,8 @@ void release_intersection(const char* train_name, const char* inter_name, int re
     } else {
         sem_post(&inter->semaphore);
     }
-
+    alloc[trainx][idx] = 0; //Remove resource from allocation matrix.
+    printf("Train ID: %d, Intersection ID: %d, Allocation: %d  \n", trainx, idx, alloc[trainx][idx]);
     remove_train_from_holding(inter, train_name);
     printf("%s has left %s.\n", train_name, inter->name);
     send_response(res_id, "GRANT");
@@ -203,15 +269,62 @@ void train_behavior(char* train_info, int req_id, int res_id) {
     while (interName != NULL) {                       //if there are still more intersections, GET ANOTHER ONE
         acquire_intersection(train_name, interName, req_id, res_id);    //train enter :D
         release_intersection(train_name, interName, req_id, res_id);    //train leave :(
-        interName = strtok(NULL, ",\n");              //GET THE NEXT ONE
+        interName = strtok(NULL, ",\t\r\n\v\f\b");              //GET THE NEXT ONE
     }
     exit(0);
+}
+
+void createBuf1()
+{
+  key = ftok(".",'b');
+  shmReq = shmget(key,sizeof(int[5][5]),IPC_CREAT|0666);
+
+  if(shmReq == -1 )
+  {  
+    perror("shmget");
+    exit(1);
+  }
+  else
+  {  
+    printf("Creating new shared memory segment\n");
+    req = shmat(shmReq,0,0);
+    if(req == (void*) -1 )
+    {  
+      perror("shmat");
+      exit(1);
+    }
+  }  
+}
+
+void createBuf2()
+{
+  key = ftok(".",'c');
+  shmAlloc = shmget(key,sizeof(int[5][5]),IPC_CREAT|0666);
+
+  if(shmAlloc == -1 )
+  {  
+    perror("shmget");
+    exit(1);
+  }
+  else
+  {  
+    printf("Creating new shared memory segment\n");
+    alloc = shmat(shmAlloc,0,0);
+    if(alloc == (void*) -1 )
+    {  
+      perror("shmat");
+      exit(1);
+    }
+  }  
 }
 
 int main() {
     // Create two message queues: one for requests, one for responses
     int req_id = msgget(IPC_PRIVATE, 0666 | IPC_CREAT);
     int res_id = msgget(IPC_PRIVATE, 0666 | IPC_CREAT);
+    //Create request and allocation matricies in shared memory.
+    createBuf1();
+    createBuf2();
     
     FILE *intersections_init = fopen("intersections.txt","r"); //Read intersections file
     FILE *trains_init = fopen("trains.txt","r");               //Read trains file
@@ -221,8 +334,8 @@ int main() {
       char temp[100];
       fgets(temp,100,intersections_init);     //read line from intersections file into temp
       fgets(trains[i],100,trains_init);       //read line from trains file directly into trains array
-        
-      char* interName = strtok(temp, ":");    //copy name of intersection into interName
+      char delim[] = ":\t\r\n\v\f\b";  
+      char* interName = strtok(temp, delim);    //copy name of intersection into interName
       char* tempCap = strtok(NULL, ":");     //copy intersection capacity into capacity
       int cap;
       sscanf(tempCap, "%d", &cap);
@@ -235,7 +348,6 @@ int main() {
         strcpy(intersections[i].name, interName);        //name
         intersections[i].type = MUTEX;                   //locktype
         intersections[i].capacity = cap;                 //capacity
-
       }
     }
     
@@ -252,7 +364,7 @@ int main() {
             sem_init(&intersections[i].semaphore, 1, intersections[i].capacity);
         }
     }
-    
+
     for (int i = 0; i < NUM_TRAINS; i++) {
         pid_t pid = fork();
         if (pid == 0) {
