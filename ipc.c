@@ -196,45 +196,15 @@ void handle_request(int req_id, int res_id) {
 }
 
 // Train behavior
-void train_behavior(const char* train_name, int req_id, int res_id) {
-    if (strcmp(train_name, "Train1") == 0) {
-        acquire_intersection(train_name, "IntersectionA", req_id, res_id);
-        release_intersection(train_name, "IntersectionA", req_id, res_id);
-
-        acquire_intersection(train_name, "IntersectionB", req_id, res_id);
-        release_intersection(train_name, "IntersectionB", req_id, res_id);
-
-        acquire_intersection(train_name, "IntersectionC", req_id, res_id);
-        release_intersection(train_name, "IntersectionC", req_id, res_id);
-    } else if (strcmp(train_name, "Train2") == 0) {
-        acquire_intersection(train_name, "IntersectionB", req_id, res_id);
-        release_intersection(train_name, "IntersectionB", req_id, res_id);
-
-        acquire_intersection(train_name, "IntersectionD", req_id, res_id);
-        release_intersection(train_name, "IntersectionD", req_id, res_id);
-
-        acquire_intersection(train_name, "IntersectionE", req_id, res_id);
-        release_intersection(train_name, "IntersectionE", req_id, res_id);
-    } else if (strcmp(train_name, "Train3") == 0) {
-        acquire_intersection(train_name, "IntersectionC", req_id, res_id);
-        release_intersection(train_name, "IntersectionC", req_id, res_id);
-
-        acquire_intersection(train_name, "IntersectionD", req_id, res_id);
-        release_intersection(train_name, "IntersectionD", req_id, res_id);
-
-        acquire_intersection(train_name, "IntersectionA", req_id, res_id);
-        release_intersection(train_name, "IntersectionA", req_id, res_id);
-    } else if (strcmp(train_name, "Train4") == 0) {
-        acquire_intersection(train_name, "IntersectionE", req_id, res_id);
-        release_intersection(train_name, "IntersectionE", req_id, res_id);
-
-        acquire_intersection(train_name, "IntersectionB", req_id, res_id);
-        release_intersection(train_name, "IntersectionB", req_id, res_id);
-
-        acquire_intersection(train_name, "IntersectionD", req_id, res_id);
-        release_intersection(train_name, "IntersectionD", req_id, res_id);
+void train_behavior(char* train_info, int req_id, int res_id) {
+    char* train_name = strtok(train_info, ":");       //get dat train name
+    char* interName = strtok(NULL, ":");              //get da intersections list
+    interName = strtok(interName, ",");               //now get only the first one
+    while (interName != NULL) {                       //if there are still more intersections, GET ANOTHER ONE
+        acquire_intersection(train_name, interName, req_id, res_id);    //train enter :D
+        release_intersection(train_name, interName, req_id, res_id);    //train leave :(
+        interName = strtok(NULL, ",\n");              //GET THE NEXT ONE
     }
-
     exit(0);
 }
 
@@ -282,8 +252,7 @@ int main() {
             sem_init(&intersections[i].semaphore, 1, intersections[i].capacity);
         }
     }
-
-    const char* trains[NUM_TRAINS] = {"Train1", "Train2", "Train3", "Train4"};
+    
     for (int i = 0; i < NUM_TRAINS; i++) {
         pid_t pid = fork();
         if (pid == 0) {
