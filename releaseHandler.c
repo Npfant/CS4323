@@ -1,180 +1,106 @@
-// Group Project CS 4323 - Ashton and Luis (Phase 1 [work in progress])
+// Group Project CS 4323 - Ashton and Luis
 // Description: Simulates train movement with semaphores/mutexes, forks child processes
-// We are not fully done yet, but we have made great progress, and we will work later down the road to merge this code with the rest of the groups
+// we will work later down the road to merge this code with the rest of the groups
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <pthread.h>
-#include <semaphore.h>
-#include <sys/types.h>
-#include <sys/wait.h>
 
-#define NUM_TRAINS 4
-#define MAX_NAME_LEN 32
-#define MAX_HOLDING 10
+#define MAX_TRAINS 10                  // Max number of trains allowed
+#define MAX_INTERSECTIONS 10          // Max number of intersections
+#define MAX_NAME_LEN 32               // Max length for names
+#define MAX_ROUTE_LEN 10              // Max intersections per train route
 
+// Enum to represent the type of lock used by an intersection
 typedef enum { MUTEX, SEMAPHORE } LockType;
 
+// Structure to hold intersection info loaded from intersections.txt
 typedef struct {
-    char name[MAX_NAME_LEN];
-    LockType type;
-    int capacity;
-
-    pthread_mutex_t mutex;
-    sem_t semaphore;
-
-    char holding_trains[MAX_HOLDING][MAX_NAME_LEN];
-    int num_holding;
+    char name[MAX_NAME_LEN];          
+    LockType type;                    
+    int capacity;                     
 } Intersection;
 
-Intersection intersections[] = {
-    {"Intersection A", MUTEX, 1},
-    {"Intersection B", SEMAPHORE, 2}, //Was shown in group document for the specification
-    {"Intersection C", MUTEX, 1},
-    {"Intersection D", SEMAPHORE, 3},
-    {"Intersection E", MUTEX, 1}
-};
+// Structure to hold a train’s name and its route (list of intersections)
+typedef struct {
+    char name[MAX_NAME_LEN];                  
+    char route[MAX_ROUTE_LEN][MAX_NAME_LEN];  
+    int route_length;                         
+} Train;
 
-int num_intersections = sizeof(intersections) / sizeof(Intersection);
+Intersection intersections[MAX_INTERSECTIONS];
+int num_intersections = 0;
 
-// -------------------- HELPER FUNCTIONS --------------------
-int find_intersection_index(const char* name) {
-    for (int i = 0; i < num_intersections; i++) {
-        if (strcmp(intersections[i].name, name) == 0) { //This section searches through the list of intersections and returns the index of the one matching the given name, or -1 if not found.
-            return i;
+Train trains[MAX_TRAINS];
+int num_trains = 0;
+
+
+/*
+  Reads intersection data from intersections.txt.
+  Populates intersections[] array dynamically.
+ */
+void read_intersections(const char* filename) {
+    FILE* file = fopen(filename, "r");
+    if (!file) {
+        perror("Failed to open intersections.txt");
+        exit(1);
+    }
+
+    char line[128];
+    while (fgets(line, sizeof(line), file)) {
+        // First part: intersection name
+        char* token = strtok(line, ":");
+        if (token == NULL) continue;
+        strncpy(intersections[num_intersections].name, token, MAX_NAME_LEN);
+
+        // Second part: capacity
+        token = strtok(NULL, ":\n");
+        if (token == NULL) continue;
+        intersections[num_intersections].capacity = atoi(token);
+
+        // Determine lock type
+        intersections[num_intersections].type = (atoi(token) == 1) ? MUTEX : SEMAPHORE;
+
+        num_intersections++;  // Move to next slot in array
+    }
+
+    fclose(file);
+}
+
+/*
+ Reads train route data from trains.txt.
+ Populates trains[] array dynamically
+ */
+void read_trains(const char* filename) {
+    FILE* file = fopen(filename, "r");
+    if (!file) {
+        perror("Failed to open trains.txt");
+        exit(1);
+    }
+
+    char line[256];
+    while (fgets(line, sizeof(line), file)) {
+        // Get train name (before colon)
+        char* name_token = strtok(line, ":");
+        if (name_token == NULL) continue;
+        strncpy(trains[num_trains].name, name_token, MAX_NAME_LEN);
+
+        // Get route string 
+        char* route_token = strtok(NULL, ":\n");
+        int route_index = 0;
+
+        // Split route by commas and store each intersection name
+        char* inter_token = strtok(route_token, ",");
+        while (inter_token != NULL && route_index < MAX_ROUTE_LEN) {
+            strncpy(trains[num_trains].route[route_index++], inter_token, MAX_NAME_LEN);
+            inter_token = strtok(NULL, ",");
         }
+
+        trains[num_trains].route_length = route_index;  // Total intersections in this train's route
+        num_trains++;  // Move to the next train slot
     }
-    return -1;
+
+    fclose(file);
 }
 
-void add_train_to_holding(Intersection* inter, const char* train_name) {
-    strcpy(inter->holding_trains[inter->num_holding++], train_name); //Adds a train to the holding area of the given intersection by copying its name and incrementing the count.
-}
-
-void remove_train_from_holding(Intersection* inter, const char* train_name) {
-    for (int i = 0; i < inter->num_holding; i++) {
-        if (strcmp(inter->holding_trains[i], train_name) == 0) {
-            for (int j = i; j < inter->num_holding - 1; j++) { // Removes the specified train from the holding area of the intersection by shifting subsequent trains left and decrementing the count.
-                strcpy(inter->holding_trains[j], inter->holding_trains[j + 1]);
-            }
-            inter->num_holding--;
-            break;
-        }
-    }
-}
-
-// This is the core logic (most key part) Ashton figured this out
-void acquire_intersection(const char* train_name, const char* inter_name) {
-    int idx = find_intersection_index(inter_name);
-    if (idx == -1) {
-        printf("ERROR: Unknown intersection %s\n", inter_name);
-        return;
-    }
-
-    Intersection* inter = &intersections[idx];
-
-    printf("%s is waiting at %s.\n", train_name, inter->name); // Attempts to acquire access to the specified intersection for a train, waiting if necessary, then adds the train to the holding area and simulates it passing through.
-
-    if (inter->type == MUTEX) {
-        pthread_mutex_lock(&inter->mutex);
-    } else {
-        sem_wait(&inter->semaphore);
-    }
-
-    add_train_to_holding(inter, train_name);
-    printf("%s is passing through %s.\n", train_name, inter->name);
-    sleep(2); // Simulates traversal time
-}
-
-void release_intersection(const char* train_name, const char* inter_name) {
-    int idx = find_intersection_index(inter_name);
-    if (idx == -1) return;
-
-    Intersection* inter = &intersections[idx];
-
-    if (inter->type == MUTEX) {
-        pthread_mutex_unlock(&inter->mutex); // Releases the intersection previously acquired by the train, removes it from the holding area, and prints a departure message.
-    } else {
-        sem_post(&inter->semaphore);
-    }
-
-    remove_train_from_holding(inter, train_name);
-    printf("%s has left %s.\n", train_name, inter->name);
-}
-
-// Train behavior
-/*Luis figured out the path on where the trains need to go which he got from the Group Document.
-    Ashton figured out the acquire and release for the intersections so it can run smoothly
-*/
-void train_behavior(const char* train_name) {
-    if (strcmp(train_name, "Train1") == 0) {
-        acquire_intersection(train_name, "Intersection A");
-        release_intersection(train_name, "Intersection A");
-
-        acquire_intersection(train_name, "Intersection B");
-        release_intersection(train_name, "Intersection B");
-
-        acquire_intersection(train_name, "Intersection C");
-        release_intersection(train_name, "Intersection C");
-    } else if (strcmp(train_name, "Train2") == 0) {
-        acquire_intersection(train_name, "Intersection B");
-        release_intersection(train_name, "Intersection B");
-
-        acquire_intersection(train_name, "Intersection D");
-        release_intersection(train_name, "Intersection D");
-
-        acquire_intersection(train_name, "Intersection E");
-        release_intersection(train_name, "Intersection E");
-    } else if (strcmp(train_name, "Train3") == 0) {
-        acquire_intersection(train_name, "Intersection C");
-        release_intersection(train_name, "Intersection C");
-
-        acquire_intersection(train_name, "Intersection D"); //Defines the route and behavior of each train by having it sequentially acquire and release intersections specific to its name, then exits upon completion.
-        release_intersection(train_name, "Intersection D");
-
-        acquire_intersection(train_name, "Intersection A");
-        release_intersection(train_name, "Intersection A");
-    } else if (strcmp(train_name, "Train4") == 0) {
-        acquire_intersection(train_name, "Intersection E");
-        release_intersection(train_name, "Intersection E");
-
-        acquire_intersection(train_name, "Intersection B");
-        release_intersection(train_name, "Intersection B");
-
-        acquire_intersection(train_name, "Intersection D");
-        release_intersection(train_name, "Intersection D");
-    }
-
-    exit(0);
-}
-
-//from here we will include Nolan's code where the forking process will be implemented
-int main() {
-    for (int i = 0; i < num_intersections; i++) {
-        if (intersections[i].type == MUTEX) {
-            pthread_mutex_init(&intersections[i].mutex, NULL);
-        } else {
-            sem_init(&intersections[i].semaphore, 1, intersections[i].capacity);
-        }
-    }
-
-    const char* trains[NUM_TRAINS] = {"Train1", "Train2", "Train3", "Train4"};
-    for (int i = 0; i < NUM_TRAINS; i++) {
-        pid_t pid = fork();
-        if (pid == 0) {
-            train_behavior(trains[i]); //Initializes intersection synchronization primitives, forks processes for each train to run their behavior concurrently, waits for all to finish, and prints a completion message.
-        }
-    }
-
-    // wait for all trains to finish
-    for (int i = 0; i < NUM_TRAINS; i++) {
-        wait(NULL);
-    }
-
-    printf("Simulation complete. All trains finished.\n");
-
-    return 0;
-}
 
