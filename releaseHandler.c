@@ -31,7 +31,7 @@ typedef struct {
 
 Intersection intersections[] = {
     {"Intersection A", MUTEX, 1},
-    {"Intersection B", SEMAPHORE, 2},
+    {"Intersection B", SEMAPHORE, 2}, //Was shown in group document for the specification
     {"Intersection C", MUTEX, 1},
     {"Intersection D", SEMAPHORE, 3},
     {"Intersection E", MUTEX, 1}
@@ -42,7 +42,7 @@ int num_intersections = sizeof(intersections) / sizeof(Intersection);
 // -------------------- HELPER FUNCTIONS --------------------
 int find_intersection_index(const char* name) {
     for (int i = 0; i < num_intersections; i++) {
-        if (strcmp(intersections[i].name, name) == 0) {
+        if (strcmp(intersections[i].name, name) == 0) { //This section searches through the list of intersections and returns the index of the one matching the given name, or -1 if not found.
             return i;
         }
     }
@@ -50,13 +50,13 @@ int find_intersection_index(const char* name) {
 }
 
 void add_train_to_holding(Intersection* inter, const char* train_name) {
-    strcpy(inter->holding_trains[inter->num_holding++], train_name);
+    strcpy(inter->holding_trains[inter->num_holding++], train_name); //Adds a train to the holding area of the given intersection by copying its name and incrementing the count.
 }
 
 void remove_train_from_holding(Intersection* inter, const char* train_name) {
     for (int i = 0; i < inter->num_holding; i++) {
         if (strcmp(inter->holding_trains[i], train_name) == 0) {
-            for (int j = i; j < inter->num_holding - 1; j++) {
+            for (int j = i; j < inter->num_holding - 1; j++) { // Removes the specified train from the holding area of the intersection by shifting subsequent trains left and decrementing the count.
                 strcpy(inter->holding_trains[j], inter->holding_trains[j + 1]);
             }
             inter->num_holding--;
@@ -75,7 +75,7 @@ void acquire_intersection(const char* train_name, const char* inter_name) {
 
     Intersection* inter = &intersections[idx];
 
-    printf("%s is waiting at %s.\n", train_name, inter->name);
+    printf("%s is waiting at %s.\n", train_name, inter->name); // Attempts to acquire access to the specified intersection for a train, waiting if necessary, then adds the train to the holding area and simulates it passing through.
 
     if (inter->type == MUTEX) {
         pthread_mutex_lock(&inter->mutex);
@@ -95,7 +95,7 @@ void release_intersection(const char* train_name, const char* inter_name) {
     Intersection* inter = &intersections[idx];
 
     if (inter->type == MUTEX) {
-        pthread_mutex_unlock(&inter->mutex);
+        pthread_mutex_unlock(&inter->mutex); // Releases the intersection previously acquired by the train, removes it from the holding area, and prints a departure message.
     } else {
         sem_post(&inter->semaphore);
     }
@@ -131,7 +131,7 @@ void train_behavior(const char* train_name) {
         acquire_intersection(train_name, "Intersection C");
         release_intersection(train_name, "Intersection C");
 
-        acquire_intersection(train_name, "Intersection D");
+        acquire_intersection(train_name, "Intersection D"); //Defines the route and behavior of each train by having it sequentially acquire and release intersections specific to its name, then exits upon completion.
         release_intersection(train_name, "Intersection D");
 
         acquire_intersection(train_name, "Intersection A");
@@ -164,7 +164,7 @@ int main() {
     for (int i = 0; i < NUM_TRAINS; i++) {
         pid_t pid = fork();
         if (pid == 0) {
-            train_behavior(trains[i]);
+            train_behavior(trains[i]); //Initializes intersection synchronization primitives, forks processes for each train to run their behavior concurrently, waits for all to finish, and prints a completion message.
         }
     }
 
