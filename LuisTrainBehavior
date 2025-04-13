@@ -38,7 +38,7 @@ void move_train(const char* train_name, const char* intersection){
     }
     else if(strcmp(intersection, "Intersection C") == 0){
         sem_wait(sem_C);
-        printf("%s is passing through %s.\n", train_name, intersection);
+        printf("%s is passing through %s.\n", train_name, intersection); //Handles a train's movement through a specified intersection by waiting on its semaphore, simulating passage, and then releasing it—includes detailed debug output for each step.
         sleep(2);
         sem_post(sem_C);
     }
@@ -56,6 +56,7 @@ void move_train(const char* train_name, const char* intersection){
     }
 }
 
+//Defines the route each train takes by calling move_train with the intersections it must pass through, based on the group project’s specified directions.
 void train_behavior(const char* train_name){
     if(strcmp(train_name, "Train1") == 0){
         move_train(train_name, "Intersection A"); //Luis implemented where the train will go from the instructions of the group project.
