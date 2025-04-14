@@ -1,7 +1,7 @@
 //Author Name: Nathan Fant
 //Email: nathan.fant@okstate.edu
 //Date: 04/06/2025
-//Program Description: Individual code for group project
+//Program Description: Code for simulation logging.
 
 #include <stdio.h>
 #include <string.h>
