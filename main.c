@@ -129,7 +129,7 @@ void receive_response(int res_id, struct response_msg* msg) {
     }
 }
 
-void rat(){  //Resource allocation table method
+bool rat(){  //Resource allocation table method
     int avail[num_intersections];
     printf("Alloc Matrix: ");
     for(int i = 0; i < num_intersections; i++){
@@ -165,6 +165,29 @@ void rat(){  //Resource allocation table method
     else{
         printf("NO DEADLOCK\n");
     }
+    return cycle;
+}
+
+void preemption(int trainx, const char* train_name, int req_id, int res_id){
+    for(int i = 0; i < num_intersections; i++){
+        if(alloc[trainx][i] == 1){
+            Intersection* inter = &intersections[i];
+            if (inter->type == MUTEX) {
+                pthread_mutex_unlock(&inter->mutex);
+            } else {
+                sem_post(&inter->semaphore);
+            }
+            alloc[trainx][i] = 0;
+            req[trainx][i] = 1;
+        }
+    }
+    for(int i = 0; i < num_intersections; i++){
+        if(req[trainx][i] == 1){
+            Intersection* inter = &intersections[i];
+            acquire_intersection(train_name, inter->name, req_id, res_id);    //train enter :D
+            release_intersection(train_name, inter->name, req_id, res_id);    //train leave :(
+        }
+    }
 }
 
 // This is the core logic (most key part)
@@ -183,7 +206,6 @@ void acquire_intersection(const char* train_name, const char* inter_name, int re
     Intersection* inter = &intersections[idx];
     req[trainx][idx] = 1; //Add resource to request matrix.
     printf("Train ID: %d, Intersection ID: %d, Request: %d  \n", trainx, idx, req[trainx][idx]);
-    rat(); //Call resource allocation table method to check whether or not a deadlock has occurred. 
     printf("%s is waiting at %s.\n", train_name, inter->name);
     send_request(req_id, train_name, inter_name);
 
@@ -192,7 +214,15 @@ void acquire_intersection(const char* train_name, const char* inter_name, int re
 
     while (strcmp(response.response, "WAIT") == 0) {
         printf("%s is waiting for permission at %s.\n", train_name, inter->name);
-        sleep(1);  // Retry after a delay (for simplicity)
+        bool cycle = rat(); //Call resource allocation table method to check whether or not a deadlock has occurred.
+        if(cycle == FALSE){
+            sleep(1);  // Retry after a delay (for simplicity)
+        }
+        else{
+            req[trainx][idx] = 0;
+            preemption(trainx, train_name, req_id, res_id); //Preemption routine; victimizes train that would cause deadlock.
+            req[trainx][idx] = 1;
+        }
         send_request(req_id, train_name, inter_name);  // Resend request
         receive_response(res_id, &response);  // Wait for new response
     }
@@ -274,7 +304,7 @@ void train_behavior(char* train_info, int req_id, int res_id) {
     exit(0);
 }
 
-void createBuf1()
+void createBuf1() //Create request matrix shared memory space.
 {
   key = ftok(".",'b');
   shmReq = shmget(key,sizeof(int[5][5]),IPC_CREAT|0666);
@@ -296,7 +326,7 @@ void createBuf1()
   }  
 }
 
-void createBuf2()
+void createBuf2() //Create allocation matrix shared memory.
 {
   key = ftok(".",'c');
   shmAlloc = shmget(key,sizeof(int[5][5]),IPC_CREAT|0666);
