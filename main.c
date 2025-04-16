@@ -211,14 +211,15 @@ void acquire_intersection(const char* train_name, const char* inter_name, int re
 
     struct response_msg response;
     receive_response(res_id, &response);
-
+    bool check_rat = 0; //Check for deadlock.
+    bool cycle = 0;
     while (strcmp(response.response, "WAIT") == 0) {
         printf("%s is waiting for permission at %s.\n", train_name, inter->name);
-        bool cycle = rat(); //Call resource allocation table method to check whether or not a deadlock has occurred.
-        if(cycle == FALSE){
-            sleep(1);  // Retry after a delay (for simplicity)
+        if(check_rat == 0){
+            cycle = rat(); //Call resource allocation table method to check whether or not a deadlock has occurred.
+            check_rat = 1;
         }
-        else{
+        if(cycle == 1){ //Deadlock detected.
             req[trainx][idx] = 0;
             preemption(trainx, train_name, req_id, res_id); //Preemption routine; victimizes train that would cause deadlock.
             req[trainx][idx] = 1;
