@@ -11,11 +11,10 @@
 #include <sys/shm.h>
 #include <stdbool.h>
 
-#define NUM_TRAINS 5
 #define MAX_NAME_LEN 32
 #define MAX_HOLDING 10
+#define MAX_LINE_LEN 100
 
-char trains[5][100];         //Store train data in array of 5 lines
 
 // Message structure for request queue (train to server)
 struct request_msg {
@@ -45,19 +44,21 @@ typedef struct {
     int num_holding;
 } Intersection;
 
-Intersection intersections[5];
-
-int num_intersections = sizeof(intersections) / sizeof(Intersection);
+//Global variables
+char** trains = NULL;    
+Intersection* intersections = NULL;
+int NUM_TRAINS = 0;
+int NUM_INTERSECTIONS = 0;
 
 key_t key;
 int shmAlloc;
 int shmReq;
-int (*alloc)[5]; //Initialize allocation and resource matricies to number of trains and intersections.
-int (*req)[5];
+int** alloc = NULL; //Initialize allocation and resource matricies to number of trains and intersections.
+int** req = NULL;
 
 // -------------------- HELPER FUNCTIONS --------------------
 int find_intersection_index(const char* name) {
-    for (int i = 0; i < num_intersections; i++) {
+    for (int i = 0; i < NUM_INTERSECTIONS; i++) {
         if (strcmp(intersections[i].name, name) == 0) {
             return i;
         }
@@ -130,9 +131,9 @@ void receive_response(int res_id, struct response_msg* msg) {
 }
 
 void rat(){  //Resource allocation table method
-    int avail[num_intersections];
+    int avail[NUM_INTERSECTIONS];
     printf("Alloc Matrix: ");
-    for(int i = 0; i < num_intersections; i++){
+    for(int i = 0; i < NUM_INTERSECTIONS; i++){
         avail[i] = intersections[i].capacity;  //Max that can be allocated.
         for(int j = 0; j < NUM_TRAINS; j++){
             printf("%d", alloc[i][j]);
@@ -147,12 +148,12 @@ void rat(){  //Resource allocation table method
     bool cycle = 1; //Start with an assumed cycle
     //printf("Req Matrix: ");
     for(int i = 0; i < NUM_TRAINS; i++){
-        for(int j = 0; j < num_intersections; j++){
+        for(int j = 0; j < NUM_INTERSECTIONS; j++){
             //printf("%d", req[i][j]);
             if((avail[j] - req[i][j]) < 0){
                 break; //Stops checking request if it is larger than available.
             }
-            if(j == (num_intersections - 1)){
+            if(j == (NUM_INTERSECTIONS - 1)){
                 cycle = 0; //Sets cycle to false if it fully iterates through a line, i.e. there is a request that can be fulfilled.
             }
         }
@@ -318,22 +319,64 @@ void createBuf2()
   }  
 }
 
+//Counts the lines (basically the amount of trains/intersections) in the respective files.
+int countLines(FILE *filename){
+    int currentLine = 1;
+    char c;
+    
+    do{
+      c = fgetc(filename);
+      
+      if (c == '\n'){
+        currentLine++;
+      }
+      
+    } while (c != EOF);
+    
+    return currentLine;
+}
+
 int main() {
     // Create two message queues: one for requests, one for responses
     int req_id = msgget(IPC_PRIVATE, 0666 | IPC_CREAT);
     int res_id = msgget(IPC_PRIVATE, 0666 | IPC_CREAT);
-    //Create request and allocation matricies in shared memory.
+    //Create request and allocation matricies in shared memory
     createBuf1();
     createBuf2();
     
     FILE *intersections_init = fopen("intersections.txt","r"); //Read intersections file
     FILE *trains_init = fopen("trains.txt","r");               //Read trains file
-  
-    int height = 5;
-    for(int i = 0; i < height; i++){ //Loop to read lines into arrays
-      char temp[100];
-      fgets(temp,100,intersections_init);     //read line from intersections file into temp
-      fgets(trains[i],100,trains_init);       //read line from trains file directly into trains array
+    
+    //Get counts
+    NUM_TRAINS = countLines(trains_init);
+    NUM_INTERSECTIONS = countLines(intersections_init);
+    
+    //Test
+    printf("Found %d trains and %d intersections\n", NUM_TRAINS, NUM_INTERSECTIONS);
+    
+    //Allocate memory for trains and intersections
+    trains = (char**)malloc(NUM_TRAINS * sizeof(char*));
+    intersections = (Intersection*)malloc(NUM_INTERSECTIONS * sizeof(Intersection));
+    
+    //Allocate memory for each train string
+    for (int i = 0; i < NUM_TRAINS; i++) {
+        trains[i] = (char*)malloc(MAX_LINE_LEN * sizeof(char));
+    }
+    
+    alloc = (int**)malloc(NUM_TRAINS * sizeof(int*));
+    req = (int**)malloc(NUM_TRAINS * sizeof(int*));
+    for (int i = 0; i < NUM_TRAINS; i++){
+        alloc[i] = (int*)calloc(NUM_INTERSECTIONS, sizeof(int));
+        req[i] = (int*)calloc(NUM_INTERSECTIONS, sizeof(int));
+    }
+    
+    for (int i = 0; i < NUM_TRAINS; i++){
+        fgets(trains[i], MAX_LINE_LEN, trains_init);
+    }
+    
+    for(int i = 0; i < NUM_INTERSECTIONS; i++){ //Loop to read lines into arrays
+      char temp[MAX_LINE_LEN];
+      fgets(temp,MAX_LINE_LEN,intersections_init);     //read line from intersections file into temp
       char delim[] = ":\t\r\n\v\f\b";  
       char* interName = strtok(temp, delim);    //copy name of intersection into interName
       char* tempCap = strtok(NULL, ":");     //copy intersection capacity into capacity
@@ -351,13 +394,13 @@ int main() {
       }
     }
     
-
     if (req_id == -1 || res_id == -1) {
         perror("msgget failed");
         exit(1);
     }
 
-    for (int i = 0; i < num_intersections; i++) {
+    //Initialize mutex and semaphore locks
+    for (int i = 0; i < NUM_INTERSECTIONS; i++) {
         if (intersections[i].type == MUTEX) {
             pthread_mutex_init(&intersections[i].mutex, NULL);
         } else {
@@ -365,6 +408,7 @@ int main() {
         }
     }
 
+    //Fork trains
     for (int i = 0; i < NUM_TRAINS; i++) {
         pid_t pid = fork();
         if (pid == 0) {
@@ -392,6 +436,21 @@ int main() {
     // Cleanup message queues
     msgctl(req_id, IPC_RMID, NULL);
     msgctl(res_id, IPC_RMID, NULL);
+    
+    //Free the allocated memory
+    for (int i = 0; i < NUM_TRAINS; i++) {
+        free(trains[i]);
+        free(alloc[i]);
+        free(req[i]);
+    }
+    free(trains);
+    free(alloc);
+    free(req);
+    free(intersections);
+    
+    //Close files
+    fclose(intersections_init);
+    fclose(trains_init);
 
     return 0;
 }
