@@ -2,16 +2,7 @@
 //Program Description: Figure out train behavior for trains.
 //Pretty much I've set up a code for the train behavior so Nolan and Ashton can merge their code with mine for it to work.
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/sem.h>
-#include <sys/wait.h>
-#include <semaphore.h>
-
-#define NUM_TRAINS 4 //Trains
+#define NUM_TRAINS 4 //Number of Trains
 
 #define MAX_A 1
 #define MAX_B 2
@@ -19,75 +10,59 @@
 #define MAX_D 3
 #define MAX_E 1
 
-sem_t *sem_A, *sem_B, *sem_C, *sem_D, *sem_E; //Semaphore ID's
+sem_t *sem_A, *sem_B, *sem_C, *sem_D, *sem_E; //Semaphore ID's, I would assume we'll use this or mutexes
 
 //function for each train to move through its intersections
-void move_train(const char* train_name, const char* intersection){
-    printf("%s is waiting at %s.\n", train_name, intersection); //pretend it works and this will be the output
+void move_train(){
+    printf("Train goes somewhere ____"); //pretend it works and this will be the output
     if(strcmp(intersection, "Intersection A") == 0){
-        sem_wait(sem_A);
-        printf("%s is passing through %s.\n", train_name, intersection);
-        sleep(2); //time passing time will change, ask Group
-        sem_post(sem_A);
+         //Ashton figured out this part, Luis was just trying to find an idea on how its setup
+        //time passing time will change, most likely mutex/semaphore will be in here, ask Group
     }
-    else if(strcmp(intersection, "Intersection B") == 0){
-        sem_wait(sem_B);
-        printf("%s is passing through %s.\n", train_name, intersection);
-        sleep(2);
-        sem_post(sem_B);
+    else if("Train")){
+       //Ashton figured out
     }
-    else if(strcmp(intersection, "Intersection C") == 0){
-        sem_wait(sem_C);
-        printf("%s is passing through %s.\n", train_name, intersection);
-        sleep(2);
-        sem_post(sem_C);
+    else if("Train"){
+        //Ashton figured out
     }
-    else if(strcmp(intersection, "Intersection D") == 0){
-        sem_wait(sem_D);
-        printf("%s is passing through %s.\n", train_name, intersection);
-        sleep(2);
-        sem_post(sem_D);
+    else if("Train"){
+        //Ashton figured out
     }
-    else if(strcmp(intersection, "Intersection E") == 0){
-        sem_wait(sem_E);
-        printf("%s is passing through %s.\n", train_name, intersection);
-        sleep(2);
-        sem_post(sem_E);
+    else if("Train"){
+        //Ashton figured out
     }
 }
 
-void train_behavior(const char* train_name){
-    if(strcmp(train_name, "Train1") == 0){
-        move_train(train_name, "Intersection A");
+//Defines the route each train takes by calling move_train with the intersections it must pass through, based on the group project’s specified directions.
+void train_behavior("variables here"){
+    if("Train1"){ //basically if this train, it'll go where it needs to go
+        move_train(train_name, "Intersection A"); //Luis implemented where the train will go from the instructions of the group project.
         move_train(train_name, "Intersection B");
         move_train(train_name, "Intersection C");
     }
-    else if(strcmp(train_name, "Train2") == 0){
+    else if("Train2"){
         move_train(train_name, "Intersection B");
-        move_train(train_name, "Intersection D");
+        move_train(train_name, "Intersection D"); //shown in group project for direction
         move_train(train_name, "Intersection E");
     }
-    else if(strcmp(train_name, "Train3") == 0){
+    else if("Train3"){
         move_train(train_name, "Intersection C");
-        move_train(train_name, "Intersection D");
+        move_train(train_name, "Intersection D"); //shown in group project for direction
         move_train(train_name, "Intersection A");
     }
-    else if(strcmp(train_name, "Train4") == 0){
+    else if("Train4"){
         move_train(train_name, "Intersection E");
-        move_train(train_name, "Intersection B");
+        move_train(train_name, "Intersection B"); //shown in group project for direction
         move_train(train_name, "Intersection D");
     }
 }
 
 int main(){
-    //We need semaphores
-
-    //We need forks
+    /*
     
+    This part is where Nolan will implement his fork process by merging my train behavior code with his.
+    Ashton will take Nolan's and I combined code to merge it with his since he figured out the semaphores.
     
-
-
-
-
+    */
 
 }
