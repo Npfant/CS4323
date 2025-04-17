@@ -66,3 +66,15 @@ int main(){
     */
 
 }
+
+/*
+SHARED MEMORY possibly fixes the issue
+
+Intersection* intersections; //put at very top. this will go for for the function voidcreateSharedIntersections()
+createSharedIntersections //This will be in the main function
+
+//this will be in main function but after opening the intersection and train file
+pthread_mutexattr_t mattr;
+    pthread_mutexattr_init(&mattr); //initializes as process shared
+    pthread_mutexattr_setpshared(&mattr, PTHREAD_PROCESS_SHARED);
+*/
