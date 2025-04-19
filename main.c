@@ -182,15 +182,7 @@ void rat() {
     }
 }
 
-void* deadlock_detector(void* arg) { //Deadlock detection - Luis
-    while (1) { //Created by Luis
-        sleep(5);
-        printf("\n[Deadlock Detector] Checking for deadlocks...\n");
-        rat(); //Using Nathan's function that he made.
-        printf("[Deadlock Detector] Check complete.\n");
-    }
-    return NULL;
-}
+
 
 // ------------------------------------
 // Intersection handling logic
@@ -397,8 +389,7 @@ int main() {
             sem_init(&intersections[i].semaphore, 1, intersections[i].capacity);
         }
     }
-    pthread_t detector_thread; //Deadlock detection -Luis
-    pthread_create(&detector_thread, NULL, deadlock_detector, NULL); //Luis
+    
 
     for (int i = 0; i < NUM_TRAINS; i++) {
         if (fork() == 0) {
