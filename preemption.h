@@ -3,7 +3,7 @@
 //Date: 04/11/2025
 //Program Description: Implementation of a preemption deadlock mitigation strategy
 
-#include "intersections.c"
+#include "intersections.h"
 
 void preemption(int trainx, const char* train_name, int req_id, int res_id, int numInter, int numTrains, Intersection* intersections, char** trains, int* req, int* alloc){
     for(int i = 0; i < numInter; i++){

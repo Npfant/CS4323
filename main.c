@@ -1,4 +1,4 @@
-#include "preemption.c"
+#include "preemption.h"
 
 #define MAX_NAME_LEN 32
 #define MAX_HOLDING 10
