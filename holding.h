@@ -1,4 +1,4 @@
-#include "rat_new.c"
+#include "rat_new.h"
 
 void add_train_to_holding(Intersection* inter, const char* train_name) {    //changed by me
     if (inter->num_holding < MAX_HOLDING) {        

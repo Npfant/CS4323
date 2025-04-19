@@ -1,5 +1,5 @@
-#include "messages.c"
-#include "holding.c"
+#include "messages.h"
+#include "holding.h"
 
 int find_intersection_index(const char* name, int NUM_INTERSECTIONS, Intersection* intersections) {
     for (int i = 0; i < NUM_INTERSECTIONS; i++) {
