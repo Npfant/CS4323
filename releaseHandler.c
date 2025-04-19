@@ -1,6 +1,5 @@
-// Group Project CS 4323 - Ashton and Luis
-// Description: Simulates train movement with semaphores/mutexes, forks child processes
-// we will work later down the road to merge this code with the rest of the groups
+// Ashton Cecil
+// This still needs shared memory, but it needs to be implemented in main first
 
 #include <stdio.h>
 #include <stdlib.h>
