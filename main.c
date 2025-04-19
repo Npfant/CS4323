@@ -1,3 +1,9 @@
+//Luis Guzman
+//Main file that works with Logger.h, nathan_file.c, intersections.txt, trains.txt
+//I added a shared memory process with the createSharedIntersections function
+//added onto main function.
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
