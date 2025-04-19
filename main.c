@@ -186,7 +186,7 @@ void* deadlock_detector(void* arg) { //Deadlock detection - Luis
     while (1) { //Created by Luis
         sleep(5);
         printf("\n[Deadlock Detector] Checking for deadlocks...\n");
-        rat();
+        rat(); //Using Nathan's function that he made.
         printf("[Deadlock Detector] Check complete.\n");
     }
     return NULL;
