@@ -2,7 +2,7 @@
 //Main file that works with Logger.h, nathan_file.c, intersections.txt, trains.txt
 //I added a shared memory process with the createSharedIntersections function
 //added onto main function.
-
+//I also added the deadlock detection
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -180,6 +180,16 @@ void rat() {
     } else{
         printf("NO DEADLOCK\n");
     }
+}
+
+void* deadlock_detector(void* arg) { //Deadlock detection - Luis
+    while (1) { //Created by Luis
+        sleep(5);
+        printf("\n[Deadlock Detector] Checking for deadlocks...\n");
+        rat();
+        printf("[Deadlock Detector] Check complete.\n");
+    }
+    return NULL;
 }
 
 // ------------------------------------
@@ -387,6 +397,8 @@ int main() {
             sem_init(&intersections[i].semaphore, 1, intersections[i].capacity);
         }
     }
+    pthread_t detector_thread; //Deadlock detection -Luis
+    pthread_create(&detector_thread, NULL, deadlock_detector, NULL); //Luis
 
     for (int i = 0; i < NUM_TRAINS; i++) {
         if (fork() == 0) {
