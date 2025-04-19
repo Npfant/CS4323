@@ -1,3 +1,7 @@
+//Author Name: Tony Lopez
+//Email: gerardo.a.lopez@okstate.edu
+//Date: 04/13/2025
+//Program Description: IPC queue message, sends messages to nathan.c file to make log table. 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,6 +12,7 @@
 #include <sys/wait.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
+#include "logger.h"
 
 #define NUM_TRAINS 5
 #define MAX_NAME_LEN 32
@@ -87,6 +92,29 @@ void send_request(int req_id, const char* train_name, const char* inter_name) {
     if (msgsnd(req_id, &msg, sizeof(msg) - sizeof(long), 0) == -1) {
         perror("msgsnd failed");
     }
+
+    // LOGGING EVENT
+    Event evt;
+    strcpy(evt.type, "REQ");
+
+    
+     char cleaned_name[MAX_NAME_LEN];
+     strncpy(cleaned_name, train_name, MAX_NAME_LEN - 1);
+     cleaned_name[MAX_NAME_LEN - 1] = '\0';
+
+    // Trim newline or trailing spaces
+    cleaned_name[strcspn(cleaned_name, "\r\n")] = 0;
+
+    if (sscanf(cleaned_name, "Train%d", &evt.trainNum1) != 1) {
+     evt.trainNum1 = -1; // fallback if parsing fails
+    }
+
+    // Set intersecLetter and intersecNum
+    strncpy(evt.intersecLetter, inter_name, 1); // first letter as ID
+    evt.intersecLetter[1] = '\0';               // null terminate
+    evt.intersecNum = find_intersection_index(inter_name) + 1;
+
+    log_event(evt);
 }
 
 void send_response(int res_id, const char* response) {
@@ -96,6 +124,7 @@ void send_response(int res_id, const char* response) {
     if (msgsnd(res_id, &msg, sizeof(msg) - sizeof(long), 0) == -1) {
         perror("msgsnd failed");
     }
+    
 }
 
 // Receive request from the request queue
@@ -138,15 +167,32 @@ void acquire_intersection(const char* train_name, const char* inter_name, int re
     if (strcmp(response.response, "GRANT") == 0) {
         if (inter->type == MUTEX) {
             pthread_mutex_lock(&inter->mutex);
-        } else {
-            sem_wait(&inter->semaphore);
-        }
+    } else {
+        sem_wait(&inter->semaphore);
+    }
 
-        add_train_to_holding(inter, train_name);
-        printf("%s is passing through %s.\n", train_name, inter->name);
-        sleep(2); // Simulates traversal time
+    add_train_to_holding(inter, train_name);
+    printf("%s is passing through %s.\n", train_name, inter->name);
+    sleep(2); // Simulates traversal time
 
-        send_response(res_id, "RELEASE");
+    // LOGGING REL EVENT
+    Event evt;
+    strcpy(evt.type, "REL");
+
+    char cleaned_name[MAX_NAME_LEN];
+    strncpy(cleaned_name, train_name, MAX_NAME_LEN - 1);
+    cleaned_name[MAX_NAME_LEN - 1] = '\0';
+    cleaned_name[strcspn(cleaned_name, "\r\n")] = 0;
+
+    if (sscanf(cleaned_name, "Train%d", &evt.trainNum1) != 1) {
+        evt.trainNum1 = -1;
+    }
+
+    strncpy(evt.intersecLetter, inter_name, 1);
+    evt.intersecLetter[1] = '\0';
+    evt.intersecNum = find_intersection_index(inter_name) + 1;
+
+    log_event(evt);
     }
 }
 
@@ -165,34 +211,6 @@ void release_intersection(const char* train_name, const char* inter_name, int re
     remove_train_from_holding(inter, train_name);
     printf("%s has left %s.\n", train_name, inter->name);
     send_response(res_id, "GRANT");
-}
-
-void handle_request(int req_id, int res_id) {
-    struct request_msg request;
-    struct response_msg response;
-    
-    while (1) {
-        receive_request(req_id, &request);
-        printf("Server received request from %s for %s\n", request.train_name, request.intersection);
-        
-        int idx = find_intersection_index(request.intersection);
-        if (idx == -1) {
-            printf("ERROR: Unknown intersection %s\n", request.intersection);
-            continue;
-        }
-        
-        Intersection* inter = &intersections[idx];
-        
-        // Check if the intersection is available
-        if (inter->num_holding < inter->capacity) {
-            // Intersection is available, grant access
-            send_response(res_id, "GRANT");
-            add_train_to_holding(inter, request.train_name);
-        } else {
-            // Intersection is not available, send WAIT response
-            send_response(res_id, "WAIT");
-        }
-    }
 }
 
 // Train behavior
@@ -259,7 +277,9 @@ int main() {
             train_behavior(trains[i], req_id, res_id);
         }
     }
-
+    
+    
+   
     // Server processing requests
     for (int i = 0; i < NUM_TRAINS; i++) {
         struct request_msg request;
@@ -267,7 +287,7 @@ int main() {
         printf("Server received request from %s for %s\n", request.train_name, request.intersection);
 
         // Handle request (grant or deny)
-        send_response(res_id, "GRANT");  // Simple grant for now
+        send_response(res_id, "REQ");  // Simple grant for now
     }
 
     // Wait for all trains to finish
