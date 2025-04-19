@@ -177,10 +177,14 @@ int main() {
         exit(1);
     }
 
+    pthread_mutexattr_t mattr;
+    pthread_mutexattr_init(&mattr);
+    pthread_mutexattr_setpshared(&mattr, PTHREAD_PROCESS_SHARED);
+
     //Initialize mutex and semaphore locks
     for (int i = 0; i < NUM_INTERSECTIONS; i++) {
         if (intersections[i].type == MUTEX) {
-            pthread_mutex_init(&intersections[i].mutex, NULL);
+            pthread_mutex_init(&intersections[i].mutex, &mattr);
         } else {
             sem_init(&intersections[i].semaphore, 1, intersections[i].capacity);
         }
