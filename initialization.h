@@ -18,18 +18,18 @@
 #include <stdbool.h>
 #include <ctype.h>
 
-int trainNum;
-int interNum;
+int trainNum;    //tracker for number of trains
+int interNum;    //tracker for number of intersections
 
-int countLines(FILE *filename){
+int countLines(FILE *filename){    //function to count lines for memory allocation
     int currentLine = 1;
     char c;
     
     do{
-      c = fgetc(filename);
+      c = fgetc(filename);     //get character by character
       
       if (c == '\n'){
-        currentLine++;
+        currentLine++;         //if character is "\n", add 1
       }
       
     } while (c != EOF);
@@ -38,26 +38,26 @@ int countLines(FILE *filename){
 }
 
 int howManyTrains(){
-  return trainNum;
+  return trainNum;    //function to return number of trains
 }
 int howManyInters(){
-  return interNum;
+  return interNum;    //function to return number of intersections
 }
 
 char** getTrains(){
   
   char** trains;
   FILE *trains_init = fopen("trains.txt","r");  //read trains file
-  trainNum = countLines(trains_init);
-  rewind(trains_init);
-  trains = (char**)malloc(trainNum * sizeof(char*));
+  trainNum = countLines(trains_init);           //set number of trains variable
+  rewind(trains_init);                          //reset to top of file
+  trains = (char**)malloc(trainNum * sizeof(char*));    //allocate memory
   char nxtLine[100];
   for(int i = 0; i < trainNum; i++){
-    fgets(nxtLine, 100, trains_init);
-    trains[i] = malloc(100 * sizeof(char));
+    fgets(nxtLine, 100, trains_init);        
+    trains[i] = malloc(100 * sizeof(char));             //allocate memory for each element
     strcpy(trains[i], nxtLine);       //read line from trains file directly into trains array
   }
-  fclose(trains_init);
+  fclose(trains_init);                //close file
   //printf("-%d-\n", trainNum);
   return trains;
 }
@@ -66,9 +66,9 @@ Intersection* getIntersections(){
 
   Intersection* intersections;
   FILE *intersections_init = fopen("intersections.txt","r"); //Read intersections file
-  interNum = countLines(intersections_init);
-  rewind(intersections_init);
-  intersections = (Intersection*)malloc(interNum * sizeof(Intersection));
+  interNum = countLines(intersections_init);                 //set number of intersections variable
+  rewind(intersections_init);                                //reset to top of file
+  intersections = (Intersection*)malloc(interNum * sizeof(Intersection));    //allocate memory
   char nxtLine[100];
   for(int i = 0; i < interNum; i++){
     fgets(nxtLine, 100, intersections_init);
@@ -86,6 +86,6 @@ Intersection* getIntersections(){
       intersections[i].capacity = cap;                 //capacity
     }
   }
-  fclose(intersections_init);
+  fclose(intersections_init);                //close file
   return intersections;
 }
