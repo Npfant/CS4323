@@ -47,6 +47,7 @@ void train_behavior(char* train_info, int req_id, int res_id, int* req, int* all
     char* interName = strtok(NULL, ":");              //get da intersections list
     interName = strtok(interName, ",");               //now get only the first one
     while (interName != NULL) {                       //if there are still more intersections, GET ANOTHER ONE
+        
         acquire_intersection(train_name, interName, req_id, res_id, (int*) req, (int*) alloc, NUM_TRAINS, NUM_INTERSECTIONS, intersections, trains);    //train enter :D
         release_intersection(train_name, interName, req_id, res_id, (int*) req, (int*) alloc, NUM_TRAINS, NUM_INTERSECTIONS, intersections, trains);    //train leave :(
         interName = strtok(NULL, ",\t\r\n\v\f\b");              //GET THE NEXT ONE
@@ -126,9 +127,9 @@ int main() {
     
     //Get counts
     NUM_TRAINS = countLines(trains_init);
-    rewind(trains_init); //rewind pointers
+    rewind(trains_init);
     NUM_INTERSECTIONS = countLines(intersections_init);
-    rewind(intersections_init); //rewind pointers
+    rewind(intersections_init);
     
     //Test
     printf("Found %d trains and %d intersections\n", NUM_TRAINS, NUM_INTERSECTIONS);
@@ -152,6 +153,12 @@ int main() {
 
     for (int i = 0; i < NUM_TRAINS; i++){
         fgets(trains[i], MAX_LINE_LEN, trains_init);
+        
+        // Remove trailing newline/whitespace
+        int len = strlen(trains[i]);
+        while (len > 0 && (trains[i][len-1] == '\n' || trains[i][len-1] == '\r')) {
+            trains[i][--len] = '\0';
+        }
     }
     
     for(int i = 0; i < NUM_INTERSECTIONS; i++){ //Loop to read lines into arrays
