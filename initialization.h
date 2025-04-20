@@ -22,14 +22,15 @@
 char** getTrains(){
   
   char** trains;
-  trains = (char**)malloc(0 * sizeof(char*));
   FILE *trains_init = fopen("trains.txt","r");  //read trains file
+  int NUM_TRAINS = countLines(trains_init);
+  rewind(trains_init);
+  trains = (char**)malloc(NUM_TRAINS * sizeof(char*));
   char nxtLine[100];
-  int track = 0;
-  while (fgets(nxtLine, 100, trains_init) != NULL){
-    track++;
-    trains = realloc(trains, (track * sizeof(char*)));
-    trains[track] = malloc(100 * sizeof(char));
+  int track = -1;
+  for(int i = 0; i < NUM_TRAINS; i++){
+    fgets(nxtLine, 100, trains_init);
+    trains[i] = malloc(100 * sizeof(char));
     strcpy(trains[track], nxtLine);       //read line from trains file directly into trains array
   }
   fclose(trains_init);
@@ -39,13 +40,13 @@ char** getTrains(){
 Intersection* getIntersections(){
 
   Intersection* intersections;
-  intersections = (Intersection*)malloc(0 * sizeof(Intersection));
   FILE *intersections_init = fopen("intersections.txt","r"); //Read intersections file
+  int NUM_INTERS = countLines(intersections_init);
+  rewind(intersections_init);
+  intersections = (Intersection*)malloc(NUM_INTERS * sizeof(Intersection));
   char nxtLine[100];
-  int track = 0;
-  while (fgets(nxtLine, 100, intersections_init) != NULL){
-    track++;
-    intersections = realloc(intersections, (track * sizeof(Intersection)));
+  for(int i = 0; i < NUM_INTERS; i++){
+    fgets(nxtLine, 100, intersections_init);
     char* interName = strtok(nxtLine, ":\n");    //copy name of intersection into interName
     char* tempCap = strtok(NULL, ":");     //copy intersection capacity into capacity
     int cap;
