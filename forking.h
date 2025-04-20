@@ -3,17 +3,20 @@
 //Date: 04/20/2025
 //Program Description: Forking for the trains. The trains will read from an array for the train information, and fork in the parent process to create however many we need.
 //Gives that information to main via a method that is defined in main.
-//Also, contains code to count the amount of trains/intersections present in the .txt files. 
+//Also, wrote the code to count the amount of trains/intersections present in the .txt files.
 
 #include <stdio.h>  //for printf
 #include <stdlib.h> //for exit(1)
 #include <unistd.h> //for fork
 #include <string.h> //for string
 
-//Helper function taken from main. **NOT CREATED BY ME, BUT NECESSARY TO RUN THIS HEADER**
+//Helper function taken from main. **FUNCTION IN MAIN NOT CREATED BY ME, BUT THIS NEEDS TO BE HERE TO RUN THIS HEADER**
 extern void train_behavior(char* train_info, int req_id, int res_id, int* req, int* alloc);
 
-//Counts the lines (basically the amount of trains/intersections) in the respective files.
+
+//Counts the lines (basically the amount of trains/intersections) in the respective files. Defined elsewhere for convenience.
+
+/*
 int countLines(FILE *filename){
     int currentLine = 1;        //Counts the # of lines. The return value.
     char c;                     //Variable that stores every character read from the file.        
@@ -29,6 +32,7 @@ int countLines(FILE *filename){
     
     return currentLine;         //Returns the count.
 }
+*/
 
 //Implemented in main.c
 int forking(char** trains, int NUM_TRAINS, int req_id, int res_id, int* req, int* alloc) {
