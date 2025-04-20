@@ -10,6 +10,7 @@
 #include <sys/msg.h>
 #include <sys/shm.h>
 #include <stdbool.h>
+#include <ctype.h>
 
 #define MAX_NAME_LEN 32
 #define MAX_HOLDING 10
