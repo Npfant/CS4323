@@ -1,4 +1,5 @@
 #include "initialization.h"
+#include "forking.h"
 
 #define MAX_NAME_LEN 32
 #define MAX_HOLDING 10
@@ -153,12 +154,7 @@ int main() {
     }
 
     //Fork trains
-    for (int i = 0; i < NUM_TRAINS; i++) {
-        pid_t pid = fork();
-        if (pid == 0) {
-            train_behavior(trains[i], req_id, res_id, (int*) req, (int*) alloc);
-        }
-    }
+    int createForks = forking(trains, NUM_TRAINS, req_id, res_id, (int*)req, (int*)alloc);
 
     // Server processing requests
     for (int i = 0; i < NUM_TRAINS; i++) {
