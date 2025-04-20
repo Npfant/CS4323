@@ -113,7 +113,7 @@ int main() {
     //Allocate memory for trains and intersections
     trains = (char**)getTrains();
     intersections = (Intersection*)getIntersections();
-    NUM_TRAINS = sizeof(trains);
+    NUM_TRAINS = howManyTrains();
     NUM_INTERSECTIONS = sizeof(intersections);
     
     
