@@ -1,4 +1,4 @@
-
+#include "rat_new.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,19 +15,7 @@
 #ifndef INITIALIZATION_H
 #define INITIALIZATION_H
 
-typedef enum { MUTEX, SEMAPHORE } LockType;
 
-typedef struct {
-    char name[100];
-    LockType type;
-    int capacity;
-
-    pthread_mutex_t mutex;
-    sem_t semaphore;
-
-    char holding_trains[10][100];
-    int num_holding;
-} Intersection;
 
 char** getTrains();
 Intersection* getIntersections();
