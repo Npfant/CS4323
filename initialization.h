@@ -1,3 +1,8 @@
+//Group:    Group F
+//Name:     Dylan Palmese
+//Email:    dylan.palmese@okstate.edu
+//Date:     4/17/2025
+
 #include "rat_new.h"
 #include <stdio.h>
 #include <stdlib.h>
