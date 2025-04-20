@@ -208,10 +208,6 @@ int main() {
     }
     free(trains);
     free(intersections);
-    
-    //Close files
-    fclose(intersections_init);
-    fclose(trains_init);
 
     return 0;
 }
