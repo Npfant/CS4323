@@ -55,23 +55,6 @@ void train_behavior(char* train_info, int req_id, int res_id, int* req, int* all
     exit(0);
 }
 
-//Counts the lines (basically the amount of trains/intersections) in the respective files.
-int countLines(FILE *filename){
-    int currentLine = 1;
-    char c;
-    
-    do{
-      c = fgetc(filename);
-      
-      if (c == '\n'){
-        currentLine++;
-      }
-      
-    } while (c != EOF);
-    
-    return currentLine;
-}
-
 void createBuf1(int NUM_TRAINS, int NUM_INTERSECTIONS, int* req, key_t key) //Create request matrix shared memory space.
 {
   key = ftok(".",'b');
@@ -133,10 +116,6 @@ int main() {
     NUM_TRAINS = sizeof(trains);
     NUM_INTERSECTIONS = sizeof(intersections);
     
-    //Allocate memory for each train string
-    for (int i = 0; i < NUM_TRAINS; i++) {
-        trains[i] = (char*)malloc(MAX_LINE_LEN * sizeof(char));
-    }
     
     //Create request and allocation matricies in shared memory
     int req[NUM_TRAINS][NUM_INTERSECTIONS]; //Initialize allocation and resource matricies to number of trains and intersections.
