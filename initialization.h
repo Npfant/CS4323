@@ -18,12 +18,37 @@
 #include <stdbool.h>
 #include <ctype.h>
 
+int trainNum;
+int interNum;
+
+int countLines(FILE *filename){
+    int currentLine = 1;
+    char c;
+    
+    do{
+      c = fgetc(filename);
+      
+      if (c == '\n'){
+        currentLine++;
+      }
+      
+    } while (c != EOF);
+    //printf("%d\n",currentLine);
+    return currentLine;
+}
+
+int howManyTrains(){
+  return trainNum;
+}
+int howManyTrains(){
+  return interNum;
+}
 
 char** getTrains(){
   
   char** trains;
   FILE *trains_init = fopen("trains.txt","r");  //read trains file
-  int NUM_TRAINS = countLines(trains_init);
+  trainNum = countLines(trains_init);
   rewind(trains_init);
   trains = (char**)malloc(NUM_TRAINS * sizeof(char*));
   char nxtLine[100];
@@ -33,6 +58,7 @@ char** getTrains(){
     strcpy(trains[i], nxtLine);       //read line from trains file directly into trains array
   }
   fclose(trains_init);
+  //printf("-%d-\n", NUM_TRAINS);
   return trains;
 }
 
@@ -40,7 +66,7 @@ Intersection* getIntersections(){
 
   Intersection* intersections;
   FILE *intersections_init = fopen("intersections.txt","r"); //Read intersections file
-  int NUM_INTERS = countLines(intersections_init);
+  interNum = countLines(intersections_init);
   rewind(intersections_init);
   intersections = (Intersection*)malloc(NUM_INTERS * sizeof(Intersection));
   char nxtLine[100];
@@ -64,18 +90,3 @@ Intersection* getIntersections(){
   return intersections;
 }
 
-int countLines(FILE *filename){
-    int currentLine = 1;
-    char c;
-    
-    do{
-      c = fgetc(filename);
-      
-      if (c == '\n'){
-        currentLine++;
-      }
-      
-    } while (c != EOF);
-    
-    return currentLine;
-}
