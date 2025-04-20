@@ -1,3 +1,6 @@
+// Ashton Cecil
+
+
 #include "rat_new.h"
 
 void add_train_to_holding(Intersection* inter, const char* train_name) {    //changed by me
