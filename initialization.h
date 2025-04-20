@@ -17,12 +17,47 @@
 #include <sys/shm.h>
 #include <stdbool.h>
 #include <ctype.h>
-#ifndef INITIALIZATION_H
-#define INITIALIZATION_H
 
 
+char** getTrains(){
+  
+  char ** trains = malloc(0 * sizeof(char*));
+  FILE *trains_init = fopen("trains.txt","r");  //read trains file
+  char nxtLine[MAX_LENGTH];
+  int track = 0;
+  while (fgets(nxtLine, MAX_LENGTH, trains_init) != NULL){
+    track++;
+    trains = realloc(trains, (track * sizeof(char*)));
+    trains[i] = malloc(100 * sizeof(char));
+    strcpy(trains[track], nxtLine);       //read line from trains file directly into trains array
+  }
+  fclose(trains_init);
+  return trains;
+}
 
-char** getTrains();
-Intersection* getIntersections();
+Intersection* getIntersections(){
 
-#endif
+  Intersection intersections = malloc(0 * sizeof(Intersection));
+  FILE *intersections_init = fopen("intersections.txt","r"); //Read intersections file
+  char nxtLine[MAX_LENGTH];
+  int track = 0;
+  while (fgets(nxtLine, MAX_LENGTH, intersections_init) != NULL){
+    track++;
+    intersections = realloc(intersections, (track * sizeof(Intersection)));
+    char* interName = strtok(nxtLine, ":\n");    //copy name of intersection into interName
+    char* tempCap = strtok(NULL, ":");     //copy intersection capacity into capacity
+    int cap;
+    sscanf(tempCap, "%d", &cap);
+    if(cap > 1){                        //if capacity > 1: make locktype semaphore
+      strcpy(intersections[track].name, interName);        //name
+      intersections[track].type = SEMAPHORE;               //locktype
+      intersections[track].capacity = cap;                 //capacity
+    }else{                                         //else make locktype mutex
+      strcpy(intersections[track].name, interName);        //name
+      intersections[track].type = MUTEX;                   //locktype
+      intersections[track].capacity = cap;                 //capacity
+    }
+  }
+  fclose(intersections_init);
+  return intersections;
+}
