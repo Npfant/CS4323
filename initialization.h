@@ -50,15 +50,15 @@ char** getTrains(){
   FILE *trains_init = fopen("trains.txt","r");  //read trains file
   trainNum = countLines(trains_init);
   rewind(trains_init);
-  trains = (char**)malloc(NUM_TRAINS * sizeof(char*));
+  trains = (char**)malloc(trainNum * sizeof(char*));
   char nxtLine[100];
-  for(int i = 0; i < NUM_TRAINS; i++){
+  for(int i = 0; i < trainNum; i++){
     fgets(nxtLine, 100, trains_init);
     trains[i] = malloc(100 * sizeof(char));
     strcpy(trains[i], nxtLine);       //read line from trains file directly into trains array
   }
   fclose(trains_init);
-  //printf("-%d-\n", NUM_TRAINS);
+  //printf("-%d-\n", trainNum);
   return trains;
 }
 
@@ -68,9 +68,9 @@ Intersection* getIntersections(){
   FILE *intersections_init = fopen("intersections.txt","r"); //Read intersections file
   interNum = countLines(intersections_init);
   rewind(intersections_init);
-  intersections = (Intersection*)malloc(NUM_INTERS * sizeof(Intersection));
+  intersections = (Intersection*)malloc(interNum * sizeof(Intersection));
   char nxtLine[100];
-  for(int i = 0; i < NUM_INTERS; i++){
+  for(int i = 0; i < interNum; i++){
     fgets(nxtLine, 100, intersections_init);
     char* interName = strtok(nxtLine, ":\n");    //copy name of intersection into interName
     char* tempCap = strtok(NULL, ":");     //copy intersection capacity into capacity
@@ -89,4 +89,3 @@ Intersection* getIntersections(){
   fclose(intersections_init);
   return intersections;
 }
-
