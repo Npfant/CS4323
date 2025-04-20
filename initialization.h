@@ -32,13 +32,13 @@ char** getTrains(){
     trains[track] = malloc(100 * sizeof(char));
     strcpy(trains[track], nxtLine);       //read line from trains file directly into trains array
   }
-  fclose(*trains_init);
+  fclose(trains_init);
   return trains;
 }
 
 Intersection* getIntersections(){
 
-  Intersection intersections;
+  Intersection* intersections;
   intersections = (Intersection*)malloc(0 * sizeof(Intersection));
   FILE *intersections_init = fopen("intersections.txt","r"); //Read intersections file
   char nxtLine[100];
@@ -60,6 +60,6 @@ Intersection* getIntersections(){
       intersections[track].capacity = cap;                 //capacity
     }
   }
-  fclose(*intersections_init);
+  fclose(intersections_init);
   return intersections;
 }
