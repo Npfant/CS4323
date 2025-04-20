@@ -64,3 +64,19 @@ Intersection* getIntersections(){
   fclose(intersections_init);
   return intersections;
 }
+
+int countLines(FILE *filename){
+    int currentLine = 1;
+    char c;
+    
+    do{
+      c = fgetc(filename);
+      
+      if (c == '\n'){
+        currentLine++;
+      }
+      
+    } while (c != EOF);
+    
+    return currentLine;
+}
