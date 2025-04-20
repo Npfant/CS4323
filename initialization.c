@@ -3,6 +3,7 @@
 //Email:    dylan.palmese@okstate.edu
 //Date:     4/17/2025
 
+#include "rat_new.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,22 +17,6 @@
 #include <sys/shm.h>
 #include <stdbool.h>
 #include "initialization.h"
-
-#define MAX_LENGTH = 100;
-
-typedef enum { MUTEX, SEMAPHORE } LockType;
-
-typedef struct {
-    char name[100];
-    LockType type;
-    int capacity;
-
-    pthread_mutex_t mutex;
-    sem_t semaphore;
-
-    char holding_trains[10][100];
-    int num_holding;
-} Intersection;
 
 
 char** getTrains(){
