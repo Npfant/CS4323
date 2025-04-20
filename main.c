@@ -1,4 +1,4 @@
-#include "preemption.h"
+#include "initialization.h"
 
 #define MAX_NAME_LEN 32
 #define MAX_HOLDING 10
@@ -55,23 +55,6 @@ void train_behavior(char* train_info, int req_id, int res_id, int* req, int* all
     exit(0);
 }
 
-//Counts the lines (basically the amount of trains/intersections) in the respective files.
-int countLines(FILE *filename){
-    int currentLine = 1;
-    char c;
-    
-    do{
-      c = fgetc(filename);
-      
-      if (c == '\n'){
-        currentLine++;
-      }
-      
-    } while (c != EOF);
-    
-    return currentLine;
-}
-
 void createBuf1(int NUM_TRAINS, int NUM_INTERSECTIONS, int* req, key_t key) //Create request matrix shared memory space.
 {
   key = ftok(".",'b');
@@ -122,26 +105,17 @@ int main() {
     int req_id = msgget(IPC_PRIVATE, 0666 | IPC_CREAT);
     int res_id = msgget(IPC_PRIVATE, 0666 | IPC_CREAT);
     
-    FILE *intersections_init = fopen("intersections.txt","r"); //Read intersections file
-    FILE *trains_init = fopen("trains.txt","r");               //Read trains file
-    
     //Get counts
-    NUM_TRAINS = countLines(trains_init);
-    rewind(trains_init);
-    NUM_INTERSECTIONS = countLines(intersections_init);
-    rewind(intersections_init);
     
     //Test
     printf("Found %d trains and %d intersections\n", NUM_TRAINS, NUM_INTERSECTIONS);
     
     //Allocate memory for trains and intersections
-    trains = (char**)malloc(NUM_TRAINS * sizeof(char*));
-    intersections = (Intersection*)malloc(NUM_INTERSECTIONS * sizeof(Intersection));
+    trains = (char**)getTrains();
+    intersections = (Intersection*)getIntersections();
+    NUM_TRAINS = howManyTrains();
+    NUM_INTERSECTIONS = howManyInters();
     
-    //Allocate memory for each train string
-    for (int i = 0; i < NUM_TRAINS; i++) {
-        trains[i] = (char*)malloc(MAX_LINE_LEN * sizeof(char));
-    }
     
     //Create request and allocation matricies in shared memory
     int req[NUM_TRAINS][NUM_INTERSECTIONS]; //Initialize allocation and resource matricies to number of trains and intersections.
@@ -152,33 +126,12 @@ int main() {
     createBuf2(NUM_TRAINS, NUM_INTERSECTIONS, (int*) alloc, key2);
 
     for (int i = 0; i < NUM_TRAINS; i++){
-        fgets(trains[i], MAX_LINE_LEN, trains_init);
         
         // Remove trailing newline/whitespace
         int len = strlen(trains[i]);
         while (len > 0 && (trains[i][len-1] == '\n' || trains[i][len-1] == '\r')) {
             trains[i][--len] = '\0';
         }
-    }
-    
-    for(int i = 0; i < NUM_INTERSECTIONS; i++){ //Loop to read lines into arrays
-      char temp[MAX_LINE_LEN];
-      fgets(temp,MAX_LINE_LEN,intersections_init);     //read line from intersections file into temp
-      char delim[] = ":\t\r\n\v\f\b";  
-      char* interName = strtok(temp, delim);    //copy name of intersection into interName
-      char* tempCap = strtok(NULL, ":");     //copy intersection capacity into capacity
-      int cap;
-      sscanf(tempCap, "%d", &cap);
-        
-      if(cap > 1){                        //if capacity > 1: make locktype semaphore
-        strcpy(intersections[i].name, interName);        //name
-        intersections[i].type = SEMAPHORE;               //locktype
-        intersections[i].capacity = cap;                 //capacity
-      }else{                                         //else make locktype mutex
-        strcpy(intersections[i].name, interName);        //name
-        intersections[i].type = MUTEX;                   //locktype
-        intersections[i].capacity = cap;                 //capacity
-      }
     }
     
     if (req_id == -1 || res_id == -1) {
@@ -234,10 +187,6 @@ int main() {
     }
     free(trains);
     free(intersections);
-    
-    //Close files
-    fclose(intersections_init);
-    fclose(trains_init);
 
     return 0;
 }
