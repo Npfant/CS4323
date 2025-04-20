@@ -40,7 +40,7 @@ int countLines(FILE *filename){
 int howManyTrains(){
   return trainNum;
 }
-int howManyTrains(){
+int howManyInters(){
   return interNum;
 }
 
