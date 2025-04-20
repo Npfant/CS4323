@@ -27,11 +27,10 @@ char** getTrains(){
   rewind(trains_init);
   trains = (char**)malloc(NUM_TRAINS * sizeof(char*));
   char nxtLine[100];
-  int track = -1;
   for(int i = 0; i < NUM_TRAINS; i++){
     fgets(nxtLine, 100, trains_init);
     trains[i] = malloc(100 * sizeof(char));
-    strcpy(trains[track], nxtLine);       //read line from trains file directly into trains array
+    strcpy(trains[i], nxtLine);       //read line from trains file directly into trains array
   }
   fclose(trains_init);
   return trains;
@@ -52,13 +51,13 @@ Intersection* getIntersections(){
     int cap;
     sscanf(tempCap, "%d", &cap);
     if(cap > 1){                        //if capacity > 1: make locktype semaphore
-      strcpy(intersections[track].name, interName);        //name
-      intersections[track].type = SEMAPHORE;               //locktype
-      intersections[track].capacity = cap;                 //capacity
+      strcpy(intersections[i].name, interName);        //name
+      intersections[i].type = SEMAPHORE;               //locktype
+      intersections[i].capacity = cap;                 //capacity
     }else{                                         //else make locktype mutex
-      strcpy(intersections[track].name, interName);        //name
-      intersections[track].type = MUTEX;                   //locktype
-      intersections[track].capacity = cap;                 //capacity
+      strcpy(intersections[i].name, interName);        //name
+      intersections[i].type = MUTEX;                   //locktype
+      intersections[i].capacity = cap;                 //capacity
     }
   }
   fclose(intersections_init);
