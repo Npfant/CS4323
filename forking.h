@@ -10,13 +10,13 @@
 #include <unistd.h> //for fork
 #include <string.h> //for string
 
+#ifndef FORKING_H
+#define FORKING_H
+
 //Helper function taken from main. **FUNCTION IN MAIN NOT CREATED BY ME, BUT THIS NEEDS TO BE HERE TO RUN THIS HEADER**
 extern void train_behavior(char* train_info, int req_id, int res_id, int* req, int* alloc);
 
 
-//Counts the lines (basically the amount of trains/intersections) in the respective files. Defined elsewhere for convenience.
-
-/*
 int countLines(FILE *filename){
     int currentLine = 1;        //Counts the # of lines. The return value.
     char c;                     //Variable that stores every character read from the file.        
@@ -32,7 +32,6 @@ int countLines(FILE *filename){
     
     return currentLine;         //Returns the count.
 }
-*/
 
 //Implemented in main.c
 int forking(char** trains, int NUM_TRAINS, int req_id, int res_id, int* req, int* alloc) {
@@ -51,3 +50,5 @@ int forking(char** trains, int NUM_TRAINS, int req_id, int res_id, int* req, int
     }
   }
 }
+
+#endif

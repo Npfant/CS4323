@@ -3,37 +3,8 @@
 //Date: 04/13/2025
 //Program Description: Implementation of a resource allocation table
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <pthread.h>
-#include <semaphore.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
-#include <sys/shm.h>
-#include <stdbool.h>
-
-#define MAX_NAME_LEN 32
-#define MAX_HOLDING 10
-#define MAX_LINE_LEN 100
-
-// Intersection LockType enum (MUTEX or SEMAPHORE)
-typedef enum { MUTEX, SEMAPHORE } LockType;
-
-typedef struct {
-    char name[MAX_NAME_LEN];
-    LockType type;
-    int capacity;
-
-    pthread_mutex_t mutex;
-    sem_t semaphore;
-
-    char holding_trains[MAX_HOLDING][MAX_NAME_LEN];
-    int num_holding;
-} Intersection;
+#ifndef RAT_H
+#define RAT_H
 
 bool rat(int numInter, int numTrain, Intersection* intersections, int* req, int* alloc){  //Resource allocation table method
 
@@ -74,3 +45,27 @@ bool rat(int numInter, int numTrain, Intersection* intersections, int* req, int*
     }
     return cycle;
 }
+
+void preemption(int trainx, const char* train_name, int req_id, int res_id, int numInter, int numTrains, Intersection* intersections, char** trains, int* req, int* alloc){
+    for(int i = 0; i < numInter; i++){
+        if(*(alloc + trainx * numInter + i) == 1){
+            Intersection* inter = &intersections[i];
+            if (inter->type == MUTEX) {
+                pthread_mutex_unlock(&inter->mutex);
+            } else {
+                sem_post(&inter->semaphore);
+            }
+            *(alloc + trainx * numInter + i) = 0;
+            *(req + trainx * numInter + i) = 1;
+        }
+    }
+    for(int i = 0; i < numInter; i++){
+        if(*(req + trainx * numInter + i) == 1){
+            Intersection* inter = &intersections[i];
+            acquire_intersection(train_name, inter->name, req_id, res_id, (int*) req, (int*) alloc, numTrains, numInter, intersections, trains);    //train enter :D
+            release_intersection(train_name, inter->name, req_id, res_id, (int*) req, (int*) alloc, numTrains, numInter, intersections, trains);    //train leave :(
+        }
+    }
+}
+
+#endif

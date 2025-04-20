@@ -4,6 +4,8 @@
 //Program Description: Implementation of a preemption deadlock mitigation strategy
 
 #include "intersections.h"
+#ifndef PREEMPTION_H
+#define PREEMPTION_H
 
 void preemption(int trainx, const char* train_name, int req_id, int res_id, int numInter, int numTrains, Intersection* intersections, char** trains, int* req, int* alloc){
     for(int i = 0; i < numInter; i++){
@@ -26,3 +28,5 @@ void preemption(int trainx, const char* train_name, int req_id, int res_id, int 
         }
     }
 }
+
+#endif

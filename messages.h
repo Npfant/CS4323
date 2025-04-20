@@ -1,20 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <pthread.h>
-#include <semaphore.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
-#include <sys/shm.h>
-#include <stdbool.h>
-#include <ctype.h>
-
-#define MAX_NAME_LEN 32
-#define MAX_HOLDING 10
-#define MAX_LINE_LEN 100
+#ifndef MESSAGES_H
+#define MESSAGES_H
 
 // Message structure for request queue (train to server)
 struct request_msg {
@@ -61,3 +46,5 @@ void receive_response(int res_id, struct response_msg* msg) {
         perror("msgrcv failed");
     }
 }
+
+#endif

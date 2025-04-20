@@ -3,39 +3,29 @@
 //Email:    dylan.palmese@okstate.edu
 //Date:     4/17/2025
 
-#include "preemption.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <pthread.h>
-#include <semaphore.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
-#include <sys/shm.h>
-#include <stdbool.h>
-#include <ctype.h>
+#ifndef INITIALIZATION_H
+#define INITIALIZATION_H
+#define MAX_NAME_LEN 32
+#define MAX_HOLDING 10
+#define MAX_LINE_LEN 100
+
+// Intersection LockType enum (MUTEX or SEMAPHORE)
+typedef enum { MUTEX, SEMAPHORE } LockType;
+
+typedef struct {
+    char name[MAX_NAME_LEN];
+    LockType type;
+    int capacity;
+
+    pthread_mutex_t mutex;
+    sem_t semaphore;
+
+    char holding_trains[MAX_HOLDING][MAX_NAME_LEN];
+    int num_holding;
+} Intersection;
 
 int trainNum;    //tracker for number of trains
 int interNum;    //tracker for number of intersections
-
-int countLines(FILE *filename){    //function to count lines for memory allocation
-    int currentLine = 1;
-    char c;
-    
-    do{
-      c = fgetc(filename);     //get character by character
-      
-      if (c == '\n'){
-        currentLine++;         //if character is "\n", add 1
-      }
-      
-    } while (c != EOF);
-    //printf("%d\n",currentLine);
-    return currentLine;
-}
 
 int howManyTrains(){
   return trainNum;    //function to return number of trains
@@ -89,3 +79,5 @@ Intersection* getIntersections(){
   fclose(intersections_init);                //close file
   return intersections;
 }
+
+#endif

@@ -1,9 +1,23 @@
-#include "initialization.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
+#include <sys/shm.h>
+#include <stdbool.h>
+#include <ctype.h>
 #include "forking.h"
-
-#define MAX_NAME_LEN 32
-#define MAX_HOLDING 10
-#define MAX_LINE_LEN 100
+#include "initialization.h"
+#include "messages.h"
+#include "intersections.h"
+#include "rat.h"
+#include "logger.h"
+#include "logging.h"
 
 //Global variables
 char** trains = NULL;    
@@ -59,7 +73,7 @@ void train_behavior(char* train_info, int req_id, int res_id, int* req, int* all
 void createBuf1(int NUM_TRAINS, int NUM_INTERSECTIONS, int* req, key_t key) //Create request matrix shared memory space.
 {
   key = ftok(".",'b');
-  shmReq = shmget(key,sizeof(int[5][5]),IPC_CREAT|0666);
+  shmReq = shmget(key,sizeof(int[NUM_TRAINS][NUM_INTERSECTIONS]),IPC_CREAT|0666);
 
   if(shmReq == -1 )
   {  
@@ -81,7 +95,7 @@ void createBuf1(int NUM_TRAINS, int NUM_INTERSECTIONS, int* req, key_t key) //Cr
 void createBuf2(int NUM_TRAINS, int NUM_INTERSECTIONS, int* alloc, key_t key) //Create allocation matrix shared memory.
 {
   key = ftok(".",'c');
-  shmAlloc = shmget(key,sizeof(int[5][5]),IPC_CREAT|0666);
+  shmAlloc = shmget(key,sizeof(int[NUM_TRAINS][NUM_INTERSECTIONS]),IPC_CREAT|0666);
 
   if(shmAlloc == -1 )
   {  

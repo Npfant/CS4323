@@ -1,7 +1,10 @@
 // Ashton Cecil
 
-#include "messages.h"
-#include "holding.h"
+#ifndef INTERSECTIONS_H
+#define INTERSECTIONS_H
+#define MAX_NAME_LEN 32
+#define MAX_HOLDING 10
+#define MAX_LINE_LEN 100
 
 int find_intersection_index(const char* name, int NUM_INTERSECTIONS, Intersection* intersections) {
     for (int i = 0; i < NUM_INTERSECTIONS; i++) {
@@ -21,7 +24,31 @@ int find_train_index(const char* name, int NUM_TRAINS, char** trains) {
     return -1;
 }
 
+void add_train_to_holding(Intersection* inter, const char* train_name) {    //changed by me
+    if (inter->num_holding < MAX_HOLDING) {        
+       strncpy(inter->holding_trains[inter->num_holding], train_name, MAX_NAME_LEN - 1);
+       inter->holding_trains[inter->num_holding][MAX_NAME_LEN - 1] = '\0';  // Ensure null termination
+       inter->num_holding++;
+   } else {
+       printf("ERROR: Holding capacity reached at %s\n", inter->name);
+   }
+}
+
+void remove_train_from_holding(Intersection* inter, const char* train_name) {
+   for (int i = 0; i < inter->num_holding; i++) {
+       if (strcmp(inter->holding_trains[i], train_name) == 0) {
+           for (int j = i; j < inter->num_holding - 1; j++) {
+               strcpy(inter->holding_trains[j], inter->holding_trains[j + 1]);
+           }
+           inter->num_holding--;
+           break;
+       }
+   }
+}
+
 void preemption(int trainx, const char* train_name, int req_id, int res_id, int numInter, int numTrains, Intersection* intersections, char** trains, int* req, int* alloc);
+
+bool rat(int numInter, int numTrain, Intersection* intersections, int* req, int* alloc);
 
 // This is the core logic (most key part)
 void acquire_intersection(const char* train_name, const char* inter_name, int req_id, int res_id, int* req, int* alloc, int numTrains, int numInter, Intersection* intersections, char** trains) {
@@ -96,3 +123,5 @@ void release_intersection(const char* train_name, const char* inter_name, int re
     printf("%s has left %s.\n", train_name, inter->name);
     send_response(res_id, "GRANT");
 }
+
+#endif

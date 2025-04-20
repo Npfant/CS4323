@@ -3,11 +3,8 @@
 //Date: 04/06/2025
 //Program Description: Individual code for group project
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <pthread.h>
-#include "logger.h"
+#ifndef LOGGING_H
+#define LOGGING_H
 
 pthread_mutex_t time_mutex = PTHREAD_MUTEX_INITIALIZER; // Declare sim timer mutex
 int sim_time = 0;
@@ -77,3 +74,5 @@ void log_event(Event event) {
         fclose(fp);
     pthread_mutex_unlock(&time_mutex); //Release lock
 }
+
+#endif

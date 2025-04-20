@@ -1,7 +1,8 @@
 // Ashton Cecil
 
-
-#include "rat_new.h"
+#include "rat.h"
+#ifndef HOLDING_H
+#define HOLDING_H
 
 void add_train_to_holding(Intersection* inter, const char* train_name) {    //changed by me
     if (inter->num_holding < MAX_HOLDING) {        
@@ -24,3 +25,5 @@ void remove_train_from_holding(Intersection* inter, const char* train_name) {
        }
    }
 }
+
+#endif
