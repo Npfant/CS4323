@@ -126,7 +126,9 @@ int main() {
     
     //Get counts
     NUM_TRAINS = countLines(trains_init);
+    rewind(trains_init); //rewind pointers
     NUM_INTERSECTIONS = countLines(intersections_init);
+    rewind(intersections_init); //rewind pointers
     
     //Test
     printf("Found %d trains and %d intersections\n", NUM_TRAINS, NUM_INTERSECTIONS);
