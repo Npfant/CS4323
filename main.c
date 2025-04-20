@@ -114,7 +114,7 @@ int main() {
     trains = (char**)getTrains();
     intersections = (Intersection*)getIntersections();
     NUM_TRAINS = howManyTrains();
-    NUM_INTERSECTIONS = sizeof(intersections);
+    NUM_INTERSECTIONS = howManyInters();
     
     
     //Create request and allocation matricies in shared memory
