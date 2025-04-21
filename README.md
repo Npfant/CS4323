@@ -14,4 +14,4 @@ Then to run the compiled code, in the terminal type:
 
 "a.out"
 
-Ensure that all header files and main.c are in the same directory.  
+Ensure that all header files, both .txt files, and main.c are in the same directory.  
