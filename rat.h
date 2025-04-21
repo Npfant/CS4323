@@ -46,17 +46,17 @@ bool rat(int numTrains, int numInter, Intersection* intersections){  //Resource 
     return cycle;
 }
 
-void preemption(int trainx, const char* train_name, int req_id, int res_id, int numInter, int numTrains, Intersection* intersections, char** trains){
+void preemption(int trainx, const char* train_name, int req_id, int res_id, int numInter, int numTrains, Intersection* intersections, char** trains){ //Preemption method
     
-    for(int i = 0; i < numInter; i++){
-        if(alloc[trainx][i] == 1){
+    for(int i = 0; i < numInter; i++){ //Remove all allocations held by train.
+        if(alloc[trainx][i] == 1){ 
             Intersection* inter = &intersections[i];
             unlock(inter);
             alloc[trainx][i] = 0;
             req[trainx][i] = 1;
         }
     }
-    for(int i = 0; i < numInter; i++){
+    for(int i = 0; i < numInter; i++){ //Re-reqeust lost allocations.
         if(req[trainx][i] == 1){
             Intersection* inter = &intersections[i];
             acquire_intersection(train_name, inter->name, req_id, res_id, numTrains, numInter, intersections, trains);    //train enter :D
