@@ -1,7 +1,7 @@
 //Author Name: Nathan Fant
 //Email: nathan.fant@okstate.edu
 //Date: 04/06/2025
-//Program Description: Individual code for group project
+//Program Description: Simulation logging
 
 #ifndef LOGGING_H
 #define LOGGING_H

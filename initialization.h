@@ -80,4 +80,68 @@ Intersection* getIntersections(){
   return intersections;
 }
 
+void mutexes(int NUM_INTERSECTIONS, Intersection* intersections){
+  pthread_mutexattr_t mattr;
+    pthread_mutexattr_init(&mattr);
+    pthread_mutexattr_setpshared(&mattr, PTHREAD_PROCESS_SHARED);
+
+    //Initialize mutex and semaphore locks
+    for (int i = 0; i < NUM_INTERSECTIONS; i++) {
+        if (intersections[i].type == MUTEX) {
+            pthread_mutex_init(&intersections[i].mutex, &mattr);
+        } else {
+            sem_init(&intersections[i].semaphore, 1, intersections[i].capacity);
+        }
+    }
+}
+
+int shmAlloc;
+int shmReq;
+int (*alloc)[100]; //Initialize allocation and resource matricies to number of trains and intersections.
+int (*req)[100];
+
+void createBuf1(int NUM_TRAINS, int NUM_INTERSECTIONS, key_t key)
+{
+  key = ftok(".",'b');
+  shmReq = shmget(key,sizeof(int[NUM_TRAINS][NUM_INTERSECTIONS]),IPC_CREAT|0666);
+
+  if(shmReq == -1 )
+  {  
+    perror("shmget");
+    exit(1);
+  }
+  else
+  {  
+    printf("Creating new shared memory segment\n");
+    req = shmat(shmReq,0,0);
+    if(req == (void*) -1 )
+    {  
+      perror("shmat");
+      exit(1);
+    }
+  }  
+}
+
+void createBuf2(int NUM_TRAINS, int NUM_INTERSECTIONS, key_t key)
+{
+  key = ftok(".",'c');
+  shmAlloc = shmget(key,sizeof(int[NUM_TRAINS][NUM_INTERSECTIONS]),IPC_CREAT|0666);
+
+  if(shmAlloc == -1 )
+  {  
+    perror("shmget");
+    exit(1);
+  }
+  else
+  {  
+    printf("Creating new shared memory segment\n");
+    alloc = shmat(shmAlloc,0,0);
+    if(alloc == (void*) -1 )
+    {  
+      perror("shmat");
+      exit(1);
+    }
+  }  
+}
+
 #endif
