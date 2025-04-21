@@ -1,6 +1,7 @@
 // Ashton Cecil
 // This still needs shared memory, but it needs to be implemented in main first
 // Loads train routes and intersection data dynamically from trains.txt
+//Luis figured out the train behavior for the trains
 
 #include <stdio.h>
 #include <stdlib.h>
