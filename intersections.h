@@ -1,4 +1,7 @@
 // Ashton Cecil
+// Date: 4/11/2025
+// Email: acecil@okstate.edu
+// Program Description: Handles train access to intersections
 
 #ifndef INTERSECTIONS_H
 #define INTERSECTIONS_H
