@@ -1,5 +1,5 @@
-Train1:IntersectionA,IntersectionB,IntersectionC
-Train2:IntersectionE,IntersectionD,IntersectionB
-Train3:IntersectionC,IntersectionB,IntersectionE,IntersectionD
-Train4:IntersectionB,IntersectionA,IntersectionE
-Train5:IntersectionA,IntersectionE,IntersectionD,IntersectionC
+Train1:IntersectionA,IntersectionA
+Train2:IntersectionA,IntersectionB,IntersectionA
+Train3:IntersectionA,IntersectionA
+Train4:IntersectionA,IntersectionA
+Train5:IntersectionA,IntersectionB

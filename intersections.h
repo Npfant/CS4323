@@ -103,11 +103,7 @@ void acquire_intersection(const char* train_name, const char* inter_name, int re
     }
 
     if (strcmp(response.response, "GRANT") == 0) {
-        if (inter->type == MUTEX) {
-            pthread_mutex_lock(&inter->mutex);
-        } else {
-            sem_wait(&inter->semaphore);
-        }
+        lock(inter);
         req[trainx][idx] = 0; //Move resource from request matrix to allocation one.
         alloc[trainx][idx] = 1;
         //printf("Train ID: %d, Intersection ID: %d, Allocation: %d  \n", trainx, idx, *(alloc + trainx * numInter + idx));
@@ -126,11 +122,7 @@ void release_intersection(const char* train_name, const char* inter_name, int re
 
     Intersection* inter = &intersections[idx];
 
-    if (inter->type == MUTEX) {
-        pthread_mutex_unlock(&inter->mutex);
-    } else {
-        sem_post(&inter->semaphore);
-    }
+    unlock(inter);
     alloc[trainx][idx] = 0; //Remove resource from allocation matrix.
     //printf("Train ID: %d, Intersection ID: %d, Allocation: %d  \n", trainx, idx, *(alloc + trainx * numInter + idx));
     remove_train_from_holding(inter, train_name);

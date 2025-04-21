@@ -51,7 +51,7 @@ void preemption(int trainx, const char* train_name, int req_id, int res_id, int 
         if(alloc[trainx][i] == 1){
             Intersection* inter = &intersections[i];
             if (inter->type == MUTEX) {
-                pthread_mutex_unlock(&inter->mutex);
+                pthread_mutex_unlock(inter->mutex);
             } else {
                 sem_post(&inter->semaphore);
             }
