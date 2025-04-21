@@ -1,4 +1,7 @@
 // Ashton Cecil
+// Date: 4/19/2025
+// Email: acecil@okstate.edu
+// Program Description: Manages which trains are holding each intersection 
 
 #include "rat.h"
 #ifndef HOLDING_H
