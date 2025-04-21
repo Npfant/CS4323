@@ -117,7 +117,7 @@ int main() {
         printf("Server received request from %s for %s\n", request.train_name, request.intersection);
 
         // Handle request (grant or deny)
-        send_response(res_id, "GRANT");  // Simple grant for now
+        send_response(res_id, getpid(), "GRANT"); ;  // Simple grant for now
     }
 
     // Wait for all trains to finish
@@ -126,6 +126,10 @@ int main() {
     }
 
     printf("Simulation complete. All trains finished.\n");
+
+    Event e;
+    strcpy(e.type, "COM");
+    log_event(e);
 
     // Cleanup message queues
     msgctl(req_id, IPC_RMID, NULL);
