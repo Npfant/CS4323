@@ -73,6 +73,13 @@ void acquire_intersection(const char* train_name, const char* inter_name, int re
     printf("Train ID: %d, Intersection ID: %d, Request: %d  \n", trainx, idx, req[trainx][idx]);
     printf("%s is waiting at %s.\n", train_name, inter->name);
     send_request(req_id, train_name, inter_name);
+
+    Event e_req;
+    strcpy(e_req.type, "REQ");
+    e_req.trainNum1 = atoi(train_name + 5);
+    strcpy(e_req.intersecLetter, inter_name);
+    e_req.intersecNum = 1;
+    log_event(e_req);
     
     bool check_rat = 0; //Check for deadlock.
     bool cycle = 0;
@@ -87,7 +94,7 @@ void acquire_intersection(const char* train_name, const char* inter_name, int re
     }
 
     struct response_msg response;
-    receive_response(res_id, &response);
+    receive_response(res_id, getpid(), &response);
     while (strcmp(response.response, "WAIT") == 0) {
         printf("%s is waiting for permission at %s.\n", train_name, inter->name);
         /*if(check_rat == 0){
@@ -100,7 +107,7 @@ void acquire_intersection(const char* train_name, const char* inter_name, int re
             *(req + trainx * numInter + idx) = 1;
         }*/
         send_request(req_id, train_name, inter_name);  // Resend request
-        receive_response(res_id, &response);  // Wait for new response
+        receive_response(res_id, getpid(), &response);  // Wait for new response
     }
 
     if (strcmp(response.response, "GRANT") == 0) {
@@ -111,7 +118,15 @@ void acquire_intersection(const char* train_name, const char* inter_name, int re
         add_train_to_holding(inter, train_name);
         printf("%s is passing through %s.\n", train_name, inter->name);
         sleep(2);
-        send_response(res_id, "RELEASE");
+        
+        Event e_grant; // log event for grant
+        strcpy(e_grant.type, "GRNT_MUT");
+        e_grant.trainNum1 = atoi(train_name + 5); //train num
+        strcpy(e_grant.intersecLetter, inter_name); //intersection letter
+        e_grant.intersecNum = 1;
+        log_event(e_grant);
+
+        send_response(res_id, getpid(), "RELEASE");
     }
 }
 
@@ -128,7 +143,15 @@ void release_intersection(const char* train_name, const char* inter_name, int re
     //printf("Train ID: %d, Intersection ID: %d, Allocation: %d  \n", trainx, idx, *(alloc + trainx * numInter + idx));
     remove_train_from_holding(inter, train_name);
     printf("%s has left %s.\n", train_name, inter->name);
-    send_response(res_id, "GRANT");
+    
+    Event e_rel; //event for realease 
+    strcpy(e_rel.type, "REL");
+    e_rel.trainNum1 = atoi(train_name + 5);
+    strcpy(e_rel.intersecLetter, inter_name);
+    e_rel.intersecNum = 1;
+    log_event(e_rel);  //log event
+
+    send_response(res_id, getpid(), "GRANT");
 }
 
 #endif
