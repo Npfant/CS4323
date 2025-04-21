@@ -8,19 +8,19 @@
 
 bool rat(int numTrains, int numInter, Intersection* intersections){  //Resource allocation table method
     int avail[numInter];
-    printf("Alloc Matrix: ");
+    //printf("Alloc Matrix: ");
     for(int i = 0; i < numInter; i++){
         avail[i] = intersections[i].capacity;  //Max that can be allocated.
         for(int j = 0; j < numTrains; j++){
-            printf("%d", alloc[i][j]);
+            //printf("%d", alloc[i][j]);
             if(alloc[j][i] > 0){
                 avail[i] -= alloc[j][i]; //Decrements available from max to not currently allocated.
             }
         }
-        printf("\n");
+        //printf("\n");
         //printf("%d ",avail[i]);
     }
-    printf("\n");
+    //printf("\n");
     bool cycle = 1; //Start with an assumed cycle
     //printf("Req Matrix: ");
     for(int i = 0; i < numTrains; i++){
@@ -50,11 +50,7 @@ void preemption(int trainx, const char* train_name, int req_id, int res_id, int 
     for(int i = 0; i < numInter; i++){
         if(alloc[trainx][i] == 1){
             Intersection* inter = &intersections[i];
-            if (inter->type == MUTEX) {
-                pthread_mutex_unlock(inter->mutex);
-            } else {
-                sem_post(&inter->semaphore);
-            }
+            unlock(inter);
             alloc[trainx][i] = 0;
             req[trainx][i] = 1;
         }

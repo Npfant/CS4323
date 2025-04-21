@@ -6,6 +6,15 @@
 #ifndef LOGGING_H
 #define LOGGING_H
 
+typedef struct {
+    char type[10];            // e.g., REQ, GRNT_MUT, REL, etc.
+    int trainNum1;            // Primary train ID
+    int trainNum2;            // Secondary (for DEADLOCK)
+    char intersecLetter[10];  // Intersections involved
+    int intersecNum;          // Number of intersections released
+    int semaphoreCnt;         // Used for GRNT_SEM
+} Event;
+
 pthread_mutex_t time_mutex = PTHREAD_MUTEX_INITIALIZER; // Declare sim timer mutex
 int sim_time = 0;
 FILE *fp;

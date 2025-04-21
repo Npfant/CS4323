@@ -88,19 +88,16 @@ void mutexes(int NUM_INTERSECTIONS, Intersection* intersections){
   //Initialize mutex and semaphore locks
   for (int i = 0; i < NUM_INTERSECTIONS; i++) {
       if (intersections[i].type == MUTEX) {
-        int shmMut = shmget(i,sizeof(pthread_mutex_t),IPC_CREAT|0666);
-      
-        if(shmMut == -1 )
-        {  
+        int shmMut = shmget(i,sizeof(pthread_mutex_t),IPC_CREAT|0666); //Initialize shared memory for mutex.
+        if(shmMut == -1 ){  
           perror("shmget");
           exit(1);
         }
-        else
-        {  
+        else {  
           printf("Creating new shared memory segment\n");
-          intersections[i].mutex = (pthread_mutex_t*) shmat(shmMut,0,0);
+          intersections[i].mutex = (pthread_mutex_t*) shmat(shmMut,0,0); //Assign mutex shared memory.
         }  
-          pthread_mutex_init(intersections[i].mutex, &mattr);
+        pthread_mutex_init(intersections[i].mutex, &mattr); //Initialize mutex.
       } else {
           sem_init(&intersections[i].semaphore, 1, intersections[i].capacity);
       }
