@@ -24,9 +24,6 @@ char** trains = NULL;
 Intersection* intersections = NULL;
 int NUM_TRAINS = 0;
 int NUM_INTERSECTIONS = 0;
-int shmReq;
-int shmAlloc;
-
 
 void handle_request(int req_id, int res_id) {
     struct request_msg request;
@@ -57,88 +54,44 @@ void handle_request(int req_id, int res_id) {
 }
 
 // Train behavior
-void train_behavior(char* train_info, int req_id, int res_id, int* req, int* alloc) {
+void train_behavior(char* train_info, int req_id, int res_id) {
     char* train_name = strtok(train_info, ":");       //get dat train name
     char* interName = strtok(NULL, ":");              //get da intersections list
     interName = strtok(interName, ",");               //now get only the first one
     while (interName != NULL) {                       //if there are still more intersections, GET ANOTHER ONE
-        
-        acquire_intersection(train_name, interName, req_id, res_id, (int*) req, (int*) alloc, NUM_TRAINS, NUM_INTERSECTIONS, intersections, trains);    //train enter :D
-        release_intersection(train_name, interName, req_id, res_id, (int*) req, (int*) alloc, NUM_TRAINS, NUM_INTERSECTIONS, intersections, trains);    //train leave :(
+        acquire_intersection(train_name, interName, req_id, res_id, NUM_TRAINS, NUM_INTERSECTIONS, intersections, trains);    //train enter :D
+        release_intersection(train_name, interName, req_id, res_id, NUM_TRAINS, NUM_INTERSECTIONS, intersections, trains);    //train leave :(
         interName = strtok(NULL, ",\t\r\n\v\f\b");              //GET THE NEXT ONE
     }
     exit(0);
 }
-
-void createBuf1(int NUM_TRAINS, int NUM_INTERSECTIONS, int* req, key_t key) //Create request matrix shared memory space.
-{
-  key = ftok(".",'b');
-  shmReq = shmget(key,sizeof(int[NUM_TRAINS][NUM_INTERSECTIONS]),IPC_CREAT|0666);
-
-  if(shmReq == -1 )
-  {  
-    perror("shmget");
-    exit(1);
-  }
-  else
-  {  
-    printf("Creating new shared memory segment\n");
-    req = shmat(shmReq,0,0);
-    if(req == (void*) -1 )
-    {  
-      perror("shmat");
-      exit(1);
-    }
-  }  
-}
-
-void createBuf2(int NUM_TRAINS, int NUM_INTERSECTIONS, int* alloc, key_t key) //Create allocation matrix shared memory.
-{
-  key = ftok(".",'c');
-  shmAlloc = shmget(key,sizeof(int[NUM_TRAINS][NUM_INTERSECTIONS]),IPC_CREAT|0666);
-
-  if(shmAlloc == -1 )
-  {  
-    perror("shmget");
-    exit(1);
-  }
-  else
-  {  
-    printf("Creating new shared memory segment\n");
-    alloc = shmat(shmAlloc,0,0);
-    if(alloc == (void*) -1 )
-    {  
-      perror("shmat");
-      exit(1);
-    }
-  }  
-}
-
 
 int main() {
     // Create two message queues: one for requests, one for responses
     int req_id = msgget(IPC_PRIVATE, 0666 | IPC_CREAT);
     int res_id = msgget(IPC_PRIVATE, 0666 | IPC_CREAT);
     
-    //Get counts
-    
-    //Test
-    printf("Found %d trains and %d intersections\n", NUM_TRAINS, NUM_INTERSECTIONS);
-    
     //Allocate memory for trains and intersections
     trains = (char**)getTrains();
     intersections = (Intersection*)getIntersections();
     NUM_TRAINS = howManyTrains();
     NUM_INTERSECTIONS = howManyInters();
+
+    printf("Found %d trains and %d intersections\n", NUM_TRAINS, NUM_INTERSECTIONS);
     
     
     //Create request and allocation matricies in shared memory
-    int req[NUM_TRAINS][NUM_INTERSECTIONS]; //Initialize allocation and resource matricies to number of trains and intersections.
-    int alloc[NUM_TRAINS][NUM_INTERSECTIONS];
     key_t key1 = ftok(".", 'b');
     key_t key2 = ftok(".", 'c');
-    createBuf1(NUM_TRAINS, NUM_INTERSECTIONS, (int*) req, key1);
-    createBuf2(NUM_TRAINS, NUM_INTERSECTIONS, (int*) alloc, key2);
+    createBuf1(NUM_TRAINS, NUM_INTERSECTIONS, key1);
+    createBuf2(NUM_TRAINS, NUM_INTERSECTIONS, key2);
+
+    for(int i = 0; i < NUM_INTERSECTIONS; i++){
+      for(int j = 0; j < NUM_TRAINS; j++){
+        req[i][j] = 0;
+        alloc[i][j] = 0;
+      }
+    }
 
     for (int i = 0; i < NUM_TRAINS; i++){
         
@@ -153,22 +106,9 @@ int main() {
         perror("msgget failed");
         exit(1);
     }
-
-    pthread_mutexattr_t mattr;
-    pthread_mutexattr_init(&mattr);
-    pthread_mutexattr_setpshared(&mattr, PTHREAD_PROCESS_SHARED);
-
-    //Initialize mutex and semaphore locks
-    for (int i = 0; i < NUM_INTERSECTIONS; i++) {
-        if (intersections[i].type == MUTEX) {
-            pthread_mutex_init(&intersections[i].mutex, &mattr);
-        } else {
-            sem_init(&intersections[i].semaphore, 1, intersections[i].capacity);
-        }
-    }
-
+    mutexes(NUM_INTERSECTIONS, intersections);
     //Fork trains
-    int createForks = forking(trains, NUM_TRAINS, req_id, res_id, (int*)req, (int*)alloc);
+    int createForks = forking(trains, NUM_TRAINS, req_id, res_id);
 
     // Server processing requests
     for (int i = 0; i < NUM_TRAINS; i++) {

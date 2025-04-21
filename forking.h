@@ -14,7 +14,7 @@
 #define FORKING_H
 
 //Helper function taken from main. **FUNCTION IN MAIN NOT CREATED BY ME, BUT THIS NEEDS TO BE HERE TO RUN THIS HEADER**
-extern void train_behavior(char* train_info, int req_id, int res_id, int* req, int* alloc);
+extern void train_behavior(char* train_info, int req_id, int res_id);
 
 
 int countLines(FILE *filename){
@@ -34,14 +34,14 @@ int countLines(FILE *filename){
 }
 
 //Implemented in main.c
-int forking(char** trains, int NUM_TRAINS, int req_id, int res_id, int* req, int* alloc) {
+int forking(char** trains, int NUM_TRAINS, int req_id, int res_id) {
    
   //Creates the forking process for the amount of trains planned
   for (int i = 0; i < NUM_TRAINS; i++){
     pid_t pid = fork();                             //Forks a process every iteration.
 
     if (pid == 0) {                                         //Child (new process).
-        train_behavior(trains[i], req_id, res_id, req, alloc);      //Runs train_behavior, incorporating these processes into main.
+        train_behavior(trains[i], req_id, res_id);      //Runs train_behavior, incorporating these processes into main.
     }
     
     if (pid == -1) {                                        //Forking failed
